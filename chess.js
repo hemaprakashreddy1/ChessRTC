@@ -255,7 +255,7 @@ function generatePawnMoves(position, color) {
 
 function isCheck(position, color) {
     let oppositeColor = color === 'w' ? 'b' : 'w';
-    for (let dir = 0; dir < 7; dir++) {
+    for (let dir = 0; dir < 8; dir++) {
         let directionOffSet = directionOffSets[dir];
         let totalSteps = stepsToEdges[row(position)][column(position)][dir];
         let currentPosition = position;
@@ -268,7 +268,7 @@ function isCheck(position, color) {
                 } else if (currentPiece[1] === 'r' && rookDirections.includes(oppDirectionOffSets[dir])) {
                     console.log("check piece : rook");
                     return true;
-                } else if (currentPiece[1] === 'b' && bishopDirections.initChessBoard(oppDirectionOffSets[dir])) {
+                } else if (currentPiece[1] === 'b' && bishopDirections.includes(oppDirectionOffSets[dir])) {
                     console.log("check piece : bishop")
                     return true;
                 } else if (currentPiece[1] === 'q') {
@@ -314,7 +314,7 @@ function isCheckAfterMove(from, to, color) {
     let check = isCheck(kingPosition, color);
     console.log("check : ", check, "color : ", color);
     board[row(from)][column(from)] = fromPiece;
-    board[row(to)][column[to]] = toPiece;
+    board[row(to)][column(to)] = toPiece;
     console.log("king pos : ", kingPosition);
     return check;
 }

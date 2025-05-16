@@ -54,7 +54,6 @@ function createAllSquares(color) {
                     }
                 }
             });
-            // board.appendChild(square);
             squares.push(square);
         }
     }
