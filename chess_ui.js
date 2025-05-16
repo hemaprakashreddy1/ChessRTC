@@ -2,6 +2,7 @@ let positionColor;
 let myTurn;
 
 function setColorTurn(color, turn) {
+    initializeBoard(color);
     positionColor = color;
     myTurn = turn;
 }
@@ -16,8 +17,8 @@ const toOverlaySquare = createSquareClass("overlay-square");
 const highlightSquare = createSquareClass("highlight-square");
 
 let moves = [];
-function createAllSquares() {
-    const board = document.querySelector("#board");
+function createAllSquares(color) {
+    let squares = [];
     const blackHole = document.querySelector("#black-hole");
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
@@ -53,9 +54,15 @@ function createAllSquares() {
                     }
                 }
             });
-            board.appendChild(square);
+            // board.appendChild(square);
+            squares.push(square);
         }
     }
+    const board = document.querySelector("#board"); 
+    if (color === 'b') {
+        squares.reverse();
+    }
+    board.append(...squares);
 }
 
 function applyMove(moves) {
@@ -76,8 +83,8 @@ function initializePieces(positions, pieces, color) {
     }
 }
 
-function initializeBoard() {
-    createAllSquares();
+function initializeBoard(color) {
+    createAllSquares(color);
     const whitePositions = ["60", "61", "62", "63", "64", "65", "66", "67", "70", "71", "72", "73", "74", "75", "76", "77"];
     const blackPositions = ["10", "11", "12", "13", "14", "15", "16", "17", "00", "01", "02", "03", "04", "05", "06", "07"];
     const pieces = ["pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn",
@@ -85,4 +92,3 @@ function initializeBoard() {
     initializePieces(whitePositions, pieces, "w");
     initializePieces(blackPositions, pieces, "b");
 }
-initializeBoard();
