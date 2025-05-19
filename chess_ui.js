@@ -77,7 +77,7 @@ function initializePieces(positions, pieces, color) {
     for (let i = 0; i < positions.length; i++) {
         const square = document.querySelector(".cell-" + positions[i]);
         const img = document.createElement("img");
-        img.src = "pieces/" + pieces[i] + "-" + color + ".svg";
+        img.src = "piece/" + color + pieces[i] + ".svg";
         square.appendChild(img);
     }
 }
@@ -86,8 +86,7 @@ function initializeBoard(color) {
     createAllSquares(color);
     const whitePositions = ["60", "61", "62", "63", "64", "65", "66", "67", "70", "71", "72", "73", "74", "75", "76", "77"];
     const blackPositions = ["10", "11", "12", "13", "14", "15", "16", "17", "00", "01", "02", "03", "04", "05", "06", "07"];
-    const pieces = ["pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn",
-        "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook"];
+    const pieces = ["p", "p", "p", "p", "p", "p", "p", "p", "r", "n", "b", "q", "k", "b", "n", "r"];
     initializePieces(whitePositions, pieces, "w");
     initializePieces(blackPositions, pieces, "b");
 }
