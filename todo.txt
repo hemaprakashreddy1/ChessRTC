@@ -1,0 +1,8 @@
+chess.js
+    castling
+    en passant
+    pawn promotion
+    draw by insufficient material
+    three fold repetition
+    calculate generate moves only once
+    track captured material

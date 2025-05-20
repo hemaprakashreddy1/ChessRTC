@@ -458,12 +458,3 @@ function isCurrentMovePiece(position) {
 function getGameState() {
     return gameState;
 }
-
-
-/*
-castling
-enpassant
-draw by insufficient material
-three fold repetition
-*/
-
