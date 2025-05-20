@@ -29,7 +29,9 @@
     </div>
 
     <div id="main" style="display: none;">
-        <div id="board"></div>
+        <div id="game">
+            <div id="board"></div>
+        </div>
         <div id="black-hole"></div>
     </div>
 
@@ -96,22 +98,36 @@
         }
 
         function handleRemoteMove(from, to) {
-            if (makeMove(from, to)) {
+            let res = makeMove(from, to);
+            if (res >= 1) {
                 console.log("remote move :", from, to);
                 myTurn = !myTurn;
                 let fromElem = document.querySelector(".cell-" + (from < 10 ? "0" + from : from + ""));
                 let toElem = document.querySelector(".cell-" + (to < 10 ? "0" + to : to + ""));
                 applyMove([fromElem, toElem]);
+                if (res === 2) {
+                    addGameStatusMessage(false, "checkmate");
+                } else if (res == 3) {
+                    addGameStatusMessage(false, "stalemate");
+                }
                 return true;
             }
             return false;
         }
 
         function handleLocalMove(from, to) {
-            if (makeMove(from, to) === true) {
+            let res = makeMove(from, to);
+            if (res >= 1) {
                 myTurn = !myTurn;
                 applyMove(moves);
                 dataChannel.send(JSON.stringify({type: "move", message: {from, to}}));
+                if (res === 2) {
+                    dataChannel.send(JSON.stringify({type: "state", message: "checkmate"}));
+                    addGameStatusMessage(true, "checkmate");
+                } else if (res === 3) {
+                    dataChannel.send(JSON.stringify({type: "state", message: "stalemate"}));
+                    addGameStatusMessage(true, "stalemate");
+                }
                 console.log("move success\n");
             } else {
                 console.log("move failed");

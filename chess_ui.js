@@ -73,6 +73,28 @@ function applyMove(moves) {
     moves[1].appendChild(toOverlaySquare);
 }
 
+function addGameStatusMessage(fromLocal, message) {
+    let color, oppositeColor;
+    if (positionColor === 'w') {
+        color = "white";
+        oppositeColor = "black";
+    } else {
+        color = "black";
+        oppositeColor = "white";
+    }
+    if (message === "checkmate") {
+        if (fromLocal) {
+            message = color + " won by checkmate";
+        } else {
+            message = oppositeColor + " won by checkmate";
+        }
+    }
+    const game = document.querySelector("#game");
+    const h3 = document.createElement("h3");
+    h3.innerText = message;
+    game.appendChild(h3);
+}
+
 function initializePieces(positions, pieces, color) {
     for (let i = 0; i < positions.length; i++) {
         const square = document.querySelector(".cell-" + positions[i]);
