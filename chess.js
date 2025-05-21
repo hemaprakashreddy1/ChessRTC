@@ -294,39 +294,27 @@ function generatePawnMoves(position, color) {
     return moves;
 }
 
-function generateLoosePawnMoves(position, color) {
-    let moves = [];
+function generateLooseCrossPawnMoves(position, color) {
     let r = row(position);
     let c = column(position);
+    let moves = [];
     if (color === 'w') {
-        if (r === 6) {
-            if (getPiece(position + N) === "" && getPiece(position + N + N) === "") {
-                moves.push(position + N + N);
+        if (r > 0) {
+            if (c > 0) {
+                moves.push(position + NW);
             }
-        }
-        if (getPiece(position + N) === "") {
-            moves.push(position + N);
-        }
-        if (c > 0 && getPiece(position + NW) !== "" && getPiece(position + NW)[0] !== color) {
-            moves.push(position + NW);
-        }
-        if (c < 7 && getPiece(position + NE) !== "" && getPiece(position + NE)[0] !== color) {
-            moves.push(position + NE);
+            if (c < 7) {
+                moves.push(position + NE);
+            }
         }
     } else {
-        if (r == 1) {
-            if (getPiece(position + S) === "" && getPiece(position + S + S) === "") {
-                moves.push(position + S + S);
+        if (r < 7) {
+            if (c > 0) {
+                moves.push(position + SW);
             }
-        }
-        if (getPiece(position + S) === "") {
-            moves.push(position + S);
-        }
-        if (c > 0 && getPiece(position + SW) !== "" && getPiece(position + SW)[0] !== color) {
-            moves.push(position + SW);
-        }
-        if (c < 7 && getPiece(position + SE) !== "" && getPiece(position + SE)[0] !== color) {
-            moves.push(position + SE);
+            if (c < 7) {
+                moves.push(position + SE);
+            }
         }
     }
     return moves;
@@ -372,16 +360,24 @@ function isCheck(position, color) {
             if (currentPiece !== "") {
                 if (currentPiece[0] === color) {
                     break;
-                } else if (currentPiece[1] === 'r' && rookDirections.includes(oppDirectionOffSets[dir])) {
-                    return true;
-                } else if (currentPiece[1] === 'b' && bishopDirections.includes(oppDirectionOffSets[dir])) {
-                    return true;
+                } else if (currentPiece[1] === 'r') {
+                    if(rookDirections.includes(oppDirectionOffSets[dir])) {
+                        return true;
+                    }
+                } else if (currentPiece[1] === 'b') {
+                    if(bishopDirections.includes(oppDirectionOffSets[dir])) {
+                        return true;
+                    }
                 } else if (currentPiece[1] === 'q') {
                     return true;
-                } else if (currentPiece[1] === 'k' && i == 1) {
-                    return true;
-                } else if (currentPiece[1] === 'p' && generateLoosePawnMoves(currentPosition, oppositeColor).includes(position)) {
-                    return true;
+                } else if (currentPiece[1] === 'k') {
+                    if (i == 1) {
+                        return true;
+                    }
+                } else if (currentPiece[1] === 'p') {
+                    if (generateLooseCrossPawnMoves(currentPosition, oppositeColor).includes(position)) {
+                        return true;
+                    }
                 }
                 break;
             }
