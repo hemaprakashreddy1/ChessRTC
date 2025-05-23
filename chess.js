@@ -5,8 +5,10 @@ const directionOffSets = [N, E, W, S, NE, NW, SE, SW];
 const oppDirectionOffSets = [S, W, E, N, SW, SE, NW, NE];
 const rookDirections = [N, E, W, S];
 const bishopDirections = [NE, NW, SE, SW];
+
 let whiteKingPosition = 74, blackKingPosition = 4;
 let whiteMove = true;
+let lastMove;
 
 let gameState = 0;
 const gameStates = ["on", "check mate", "stale mate"];
@@ -84,8 +86,8 @@ function makeMove(from, to) {
     2 move success and checkmate
     3 move success and stalemate
     */
-    if (validateMove(from, to)) {
-        whiteMove = !whiteMove;
+    let [isValid, moves] = validateMove(from, to);
+    if (isValid) {
         let fromPiece = getPiece(from);
         if (fromPiece[1] == 'k') {
             if (fromPiece[0] == 'b') {
@@ -94,20 +96,26 @@ function makeMove(from, to) {
                 whiteKingPosition = to;
             }
         }
-        board[row(from)][column(from)] = "";
-        board[row(to)][column(to)] = fromPiece;
+        for (let move of moves) {
+            let [from, to, capture, toPiece] = move;
+            board[row(from)][column(from)] = "";
+            board[row(capture)][column(capture)] = "";
+            board[row(to)][column(to)] = toPiece;
+        }
+        whiteMove = !whiteMove;
+        lastMove = moves;
         
         let oppositeColor = fromPiece[0] === 'b' ? 'w' : 'b';
         if (isCheckMate(oppositeColor)) {
             gameState = 1;
-            return 2;
+            return [2, moves];
         } else if (isStaleMate(oppositeColor)) {
             gameState = 2;
-            return 3;
+            return [3, moves];
         }
-        return 1;
+        return [1, moves];
     }
-    return 0;
+    return [0, moves];
 }
 
 function validateMove(from, to) {
@@ -130,8 +138,12 @@ function validateMove(from, to) {
     }
 
     let moves = generateMoves(color);
-    let pieceMoves = moves[row(from)][column(from)];
-    return pieceMoves.length > 0 && pieceMoves.includes(to);
+    for (let move of moves[row(from)][column(from)]) {
+        if (move[0][1] === to) {
+            return [true, move];
+        }
+    }
+    return [false, null];
 }
 
 function generateStraightMoves(position, color) {
@@ -144,15 +156,16 @@ function generateStraightMoves(position, color) {
         for (let i = 1; i <= totalSteps; i++) {
             currentPosition += directionOffSet;
             let currentCoin = getPiece(currentPosition);
+            let move = [[position, currentPosition, currentPosition, getPiece(position)]];
             if (currentCoin == "") {
-                if (!isCheckAfterMove(position, currentPosition, color)) {
-                    moves.push(currentPosition);
+                if (!isCheckAfterMove(move, color)) {
+                    moves.push(move);
                 }
             } else if (currentCoin[0] === color) {
                 break;
             } else {
-                if (!isCheckAfterMove(position, currentPosition, color)) {
-                    moves.push(currentPosition);
+                if (!isCheckAfterMove(move, color)) {
+                    moves.push(move);
                 }
                 break;
             }
@@ -171,15 +184,16 @@ function generateCrossMoves(position, color) {
         for (let i = 1; i <= totalSteps; i++) {
             currentPosition += directionOffSet;
             let currentCoin = getPiece(currentPosition);
+            let move = [[position, currentPosition, currentPosition, getPiece(position)]];
             if (currentCoin == "") {
-                if (!isCheckAfterMove(position, currentPosition, color)) {
-                    moves.push(currentPosition);
+                if (!isCheckAfterMove(move, color)) {
+                    moves.push(move);
                 }
             } else if (currentCoin[0] === color) {
                 break;
             } else {
-                if (!isCheckAfterMove(position, currentPosition, color)) {
-                    moves.push(currentPosition);
+                if (!isCheckAfterMove(move, color)) {
+                    moves.push(move);
                 }
                 break;
             }
@@ -203,8 +217,9 @@ function generateKnightMoves(position, color) {
     for (let toPos of t) {
         if (isValidPos(toPos)) {
             let toPiece = getPiece(toPos);
-            if ((toPiece === "" || toPiece[0] !== color) && !isCheckAfterMove(position, toPos, color)) {
-                moves.push(toPos);
+            let move = [[position, toPos, toPos, getPiece(position)]];
+            if ((toPiece === "" || toPiece[0] !== color) && !isCheckAfterMove(move, color)) {
+                moves.push(move);
             }
         }
     }
@@ -242,13 +257,14 @@ function generateKingMoves(position, color) {
         if (totalSteps === 1) {
             let currentPosition = position + directionOffSet;
             let currentCoin = getPiece(currentPosition);
+            let move = [[position, currentPosition, currentPosition, getPiece(position)]];
             if (currentCoin === "") {
-                if (!isCheckAfterMove(position, currentPosition, color)) {
-                    moves.push(currentPosition);
+                if (!isCheckAfterMove(move, color)) {
+                    moves.push(move);
                 }
             } else if (currentCoin[0] !== color) {
-                if (!isCheckAfterMove(position, currentPosition, color)) {
-                    moves.push(currentPosition);
+                if (!isCheckAfterMove(move, color)) {
+                    moves.push(move);
                 }
             }
         }
@@ -260,35 +276,58 @@ function generatePawnMoves(position, color) {
     let moves = [];
     let r = row(position);
     let c = column(position);
+    let move;
     if (color === 'w') {
         if (r === 6) {
-            if (getPiece(position + N) === "" && getPiece(position + N + N) === "" && !isCheckAfterMove(position, position + N + N, color)) {
-                moves.push(position + N + N);
+            move = [[position, position + N + N, position + N + N, getPiece(position)]];
+            if (getPiece(position + N) === "" && getPiece(position + N + N) === "" && !isCheckAfterMove(move, color)) {
+                moves.push(move);
             }
         }
-        if (getPiece(position + N) === "" && !isCheckAfterMove(position, position + N, color)) {
-            moves.push(position + N);
+        move = [[position, position + N, position + N, getPiece(position)]];
+        if (getPiece(position + N) === "" && !isCheckAfterMove(move, color)) {
+            moves.push(move);
         }
-        if (c > 0 && getPiece(position + NW) !== "" && getPiece(position + NW)[0] !== color && !isCheckAfterMove(position, position + NW, color)) {
-            moves.push(position + NW);
+        move = [[position, position + NW, position + NW, getPiece(position)]];
+        if (c > 0 && getPiece(position + NW) !== "" && getPiece(position + NW)[0] !== color && !isCheckAfterMove(move, color)) {
+            moves.push(move);
         }
-        if (c < 7 && getPiece(position + NE) !== "" && getPiece(position + NE)[0] !== color && !isCheckAfterMove(position, position + NE, color)) {
-            moves.push(position + NE);
+        move = [[position, position + NE, position + NE, getPiece(position)]];
+        if (c < 7 && getPiece(position + NE) !== "" && getPiece(position + NE)[0] !== color && !isCheckAfterMove(move, color)) {
+            moves.push(move);
+        }
+        if (r == 3 && lastMove && lastMove[0][3] === 'bp' && lastMove[0][1] + N + N == lastMove[0][0]) {
+            if (position + E === lastMove[0][1]) {
+                moves.push([[position, position + NE, position + E, getPiece(position)]]);
+            }else if (position + W === lastMove[0][1]) {
+                moves.push([[position, position + NW, position + W, getPiece(position)]]);
+            }
         }
     } else {
         if (r == 1) {
-            if (getPiece(position + S) === "" && getPiece(position + S + S) === "" && !isCheckAfterMove(position, position + S + S, color)) {
-                moves.push(position + S + S);
+            move = [[position, position + S + S, position + S + S, getPiece(position)]];
+            if (getPiece(position + S) === "" && getPiece(position + S + S) === "" && !isCheckAfterMove(move, color)) {
+                moves.push(move);
             }
         }
-        if (getPiece(position + S) === "" && !isCheckAfterMove(position, position + S, color)) {
-            moves.push(position + S);
+        move = [[position, position + S, position + S, getPiece(position)]];
+        if (getPiece(position + S) === "" && !isCheckAfterMove(move, color)) {
+            moves.push(move);
         }
-        if (c > 0 && getPiece(position + SW) !== "" && getPiece(position + SW)[0] !== color && !isCheckAfterMove(position, position + SW, color)) {
-            moves.push(position + SW);
+        move = [[position, position + SW, position + SW, getPiece(position)]];
+        if (c > 0 && getPiece(position + SW) !== "" && getPiece(position + SW)[0] !== color && !isCheckAfterMove(move, color)) {
+            moves.push(move);
         }
-        if (c < 7 && getPiece(position + SE) !== "" && getPiece(position + SE)[0] !== color && !isCheckAfterMove(position, position + SE, color)) {
-            moves.push(position + SE);
+        move = [[position, position + SE, position + SE, getPiece(position)]];
+        if (c < 7 && getPiece(position + SE) !== "" && getPiece(position + SE)[0] !== color && !isCheckAfterMove(move, color)) {
+            moves.push(move);
+        }
+        if (r == 4 && lastMove && lastMove[0][3] === 'wp' && lastMove[0][1] + S + S == lastMove[0][0]) {
+            if (position + E === lastMove[0][1]) {
+                moves.push([[position, position + SE, position + E, getPiece(position)]]);
+            }else if (position + W === lastMove[0][1]) {
+                moves.push([[position, position + SW, position + W, getPiece(position)]]);
+            }
         }
     }
     return moves;
@@ -320,6 +359,12 @@ function generateLooseCrossPawnMoves(position, color) {
     return moves;
 }
 
+/*
+    move = {from, to, capture, toPiece}
+    from, to for normal move
+    capture position for en passant
+    toPiece for promotion piece
+ */
 function generateMoves(color) {
     let generatedMoves = [];
     for (let i = 0; i < 8; i++) {
@@ -423,22 +468,30 @@ function isStaleMate(color) {
     return true;    
 }
 
-function isCheckAfterMove(from, to, color) {
-    let fromPiece = getPiece(from);
-    let toPiece = getPiece(to);
-
-    board[row(from)][column(from)] = "";
-    board[row(to)][column(to)] = fromPiece;
+function isCheckAfterMove(moves, color) {
+    let piecesArr = [];
+    for (let move of moves) {
+        let [from, to, capture, toPiece] = move;
+        piecesArr.push([getPiece(from), getPiece(capture)]);
+        board[row(from)][column(from)] = "";
+        board[row(capture)][column(capture)] = "";
+        board[row(to)][column(to)] = toPiece;
+    }
 
     let kingPosition;
-    if (fromPiece[1] === 'k') {
-        kingPosition = to;
+    if (piecesArr[0][0][1] === 'k') {
+        kingPosition = moves[0][1];
     } else {
         kingPosition = color === 'b' ? blackKingPosition : whiteKingPosition;
     }
     let check = isCheck(kingPosition, color);
-    board[row(from)][column(from)] = fromPiece;
-    board[row(to)][column(to)] = toPiece;
+    for (let i = 0; i < moves.length; i++) {
+        let [from, to, capture, _] = moves[i];
+        let [fromPieceBefore, capturePieceBefore] = piecesArr[i];
+        board[row(from)][column(from)] = fromPieceBefore;
+        board[row(to)][column(to)] = "";
+        board[row(capture)][column(capture)] = capturePieceBefore;
+    }
     return check;
 }
 

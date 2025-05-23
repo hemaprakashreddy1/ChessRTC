@@ -49,8 +49,8 @@ function createAllSquares(color) {
                     if (isCurrentMovePiece(i * 10 + j)) {
                         moves[0] = square;
                     } else {
-                        moves.push(square);
                         handleLocalMove(Number(moves[0].dataset.position), i * 10 + j);
+                        moves.length = 0;
                     }
                 }
             });
@@ -68,7 +68,11 @@ function applyMove(moves) {
     if (moves[1].firstChild) {
         moves[1].removeChild(moves[1].firstChild);
     }
-    moves[1].appendChild(moves[0].firstChild);
+    if (moves[2].firstChild) {
+        moves[2].removeChild(moves[2].firstChild);
+    }
+    moves[0].removeChild(moves[0].firstChild);
+    moves[1].appendChild(moves[3]);
     moves[0].appendChild(fromOverlaySquare);
     moves[1].appendChild(toOverlaySquare);
 }
@@ -95,12 +99,20 @@ function addGameStatusMessage(fromLocal, message) {
     game.appendChild(h3);
 }
 
+function getSquareByPosition(position) {
+    return document.querySelector(".cell-" + (position < 10 ? "0" + position : position + ""));
+}
+
+function generatePiece(piece) {
+    const img = document.createElement("img");
+    img.src = "piece/" + piece + ".svg";
+    return img;
+}
+
 function initializePieces(positions, pieces, color) {
     for (let i = 0; i < positions.length; i++) {
         const square = document.querySelector(".cell-" + positions[i]);
-        const img = document.createElement("img");
-        img.src = "piece/" + color + pieces[i] + ".svg";
-        square.appendChild(img);
+        square.appendChild(generatePiece(color + pieces[i]));
     }
 }
 

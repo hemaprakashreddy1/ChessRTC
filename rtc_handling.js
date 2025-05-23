@@ -58,12 +58,14 @@ function createDataChannel(channel) {
 }
 
 function handleRemoteMove(from, to) {
-    let res = makeMove(from, to);
+    let [res, moves] = makeMove(from, to);
     if (res >= 1) {
         myTurn = !myTurn;
-        let fromElem = document.querySelector(".cell-" + (from < 10 ? "0" + from : from + ""));
-        let toElem = document.querySelector(".cell-" + (to < 10 ? "0" + to : to + ""));
-        applyMove([fromElem, toElem]);
+        for (let move of moves) {
+            let [fromPosition, toPosition, capturePosition, toPiece] = move;
+            let moveElems = [getSquareByPosition(fromPosition), getSquareByPosition(toPosition), getSquareByPosition(capturePosition), generatePiece(toPiece)];
+            applyMove(moveElems);
+        }
         if (res === 2) {
             addGameStatusMessage(false, "checkmate");
         } else if (res == 3) {
@@ -75,10 +77,14 @@ function handleRemoteMove(from, to) {
 }
 
 function handleLocalMove(from, to) {
-    let res = makeMove(from, to);
+    let [res, moves] = makeMove(from, to);
     if (res >= 1) {
         myTurn = !myTurn;
-        applyMove(moves);
+        for (let move of moves) {
+            let [fromPosition, toPosition, capturePosition, toPiece] = move;
+            let moveElems = [getSquareByPosition(fromPosition), getSquareByPosition(toPosition), getSquareByPosition(capturePosition), generatePiece(toPiece)];
+            applyMove(moveElems);
+        }
         dataChannel.send(JSON.stringify({type: "move", message: {from, to}}));
         if (res === 2) {
             dataChannel.send(JSON.stringify({type: "state", message: "checkmate"}));
@@ -87,8 +93,9 @@ function handleLocalMove(from, to) {
             dataChannel.send(JSON.stringify({type: "state", message: "stalemate"}));
             addGameStatusMessage(true, "stalemate");
         }
+        return true;
     }
-    moves.length = 0;
+    return false;
 }
 
 function generatePositionColor() {
