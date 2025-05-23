@@ -9,6 +9,8 @@ const bishopDirections = [NE, NW, SE, SW];
 let whiteKingPosition = 74, blackKingPosition = 4;
 let whiteMove = true;
 let lastMove;
+let whiteCastlePieceMoved = [false, false, false]; // order : left rook, king, right rook
+let blackCastlePieceMoved = [false, false, false];
 
 let gameState = 0;
 const gameStates = ["on", "check mate", "stale mate"];
@@ -89,11 +91,28 @@ function makeMove(from, to) {
     let [isValid, moves] = validateMove(from, to);
     if (isValid) {
         let fromPiece = getPiece(from);
-        if (fromPiece[1] == 'k') {
-            if (fromPiece[0] == 'b') {
+        let color = fromPiece[0];
+        if (fromPiece[1] === 'k') {
+            if (color === 'b') {
                 blackKingPosition = to;
+                blackCastlePieceMoved[1] = true;
             } else {
                 whiteKingPosition = to;
+                whiteCastlePieceMoved[1] = true;
+            }
+        } else if (fromPiece[1] === 'r') {
+            if (color === 'b') {
+                if (from === 0) {
+                    blackCastlePieceMoved[0] = true;
+                } else if(from === 7) {
+                    blackCastlePieceMoved[7] = true;
+                }
+            } else {
+                if (from === 70) {
+                    whiteCastlePieceMoved[70] = true;
+                } else if (from === 77) {
+                    whiteCastlePieceMoved[77] = true;
+                }
             }
         }
         for (let move of moves) {
@@ -105,7 +124,7 @@ function makeMove(from, to) {
         whiteMove = !whiteMove;
         lastMove = moves;
         
-        let oppositeColor = fromPiece[0] === 'b' ? 'w' : 'b';
+        let oppositeColor = color === 'b' ? 'w' : 'b';
         if (isCheckMate(oppositeColor)) {
             gameState = 1;
             return [2, moves];
@@ -266,6 +285,63 @@ function generateKingMoves(position, color) {
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
                 }
+            }
+        }
+    }
+    if (color === 'b') {
+        if (blackCastlePieceMoved[1] === false) {
+            if (blackCastlePieceMoved[0] === false && getPiece(position + W) + getPiece(position + 2 * W) + getPiece(position + 3 * W) === "") {
+                let possibleMoves = [[[position, position + W, position + W, 'bk']],
+                [[position, position + 2 * W, position + 2 * W, 'bk'], [position + 4 * W, position + W, position + W, 'br']]];
+                let valid = 0;
+                for (let move of possibleMoves) {
+                    if (!isCheckAfterMove(move, color)) {
+                        valid++;
+                    } else {
+                        break;
+                    }
+                }
+                if (valid === 2) {
+                    moves.push(possibleMoves[1]);
+                }
+            }
+            if (blackCastlePieceMoved[2] === false && getPiece(position + E) + getPiece(position + 2 * E) === "") {
+                let possibleMoves = [[[position, position + E, position + E, 'bk']],
+                [[position, position + 2 * E, position + 2 * E, 'bk'], [position + 3 * E, position + E, position + E, 'br']]];
+                for (let move of possibleMoves) {
+                    if (isCheckAfterMove(move, color)) {
+                        return moves;
+                    }
+                }
+                moves.push(possibleMoves[1]);
+            }
+        }
+    } else {
+        if (whiteCastlePieceMoved[1] === false) {
+            if (whiteCastlePieceMoved[0] === false && getPiece(position + W) + getPiece(position + 2 * W) + getPiece(position + 3 * W) === "") {
+                let possibleMoves = [[[position, position + W, position + W, 'wk']],
+                [[position, position + 2 * W, position + 2 * W, 'wk'], [position + 4 * W, position + W, position + W, 'wr']]];
+                let valid = 0;
+                for (let move of possibleMoves) {
+                    if (!isCheckAfterMove(move, color)) {
+                        valid++;
+                    } else {
+                        break;
+                    }
+                }
+                if (valid === 2) {
+                    moves.push(possibleMoves[1]);
+                }
+            }
+            if (whiteCastlePieceMoved[2] === false && getPiece(position + E) + getPiece(position + 2 * E) === "") {
+                let possibleMoves = [[[position, position + E, position + E, 'wk']],
+                [[position, position + 2 * E, position + 2 * E, 'wk'], [position + 3 * E, position + E, position + E, 'wr']]];
+                for (let move of possibleMoves) {
+                    if (isCheckAfterMove(move, color)) {
+                        return moves;
+                    }
+                }
+                moves.push(possibleMoves[1]);
             }
         }
     }
