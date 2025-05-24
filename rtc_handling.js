@@ -45,7 +45,8 @@ function createDataChannel(channel) {
             } else {
                 let from = data.message.from;
                 let to = data.message.to;
-                if (handleRemoteMove(Number(from), Number(to)) === true) {
+                let toPiece = data.message.promotionPiece;
+                if (handleRemoteMove(Number(from), Number(to), toPiece) === true) {
                     dataChannel.send(JSON.stringify({type: "ack", message: "true"}));
                 } else {
                     dataChannel.send(JSON.stringify({type: "ack", message: "false"}))
@@ -57,8 +58,8 @@ function createDataChannel(channel) {
     }
 }
 
-function handleRemoteMove(from, to) {
-    let [res, moves] = makeMove(from, to);
+function handleRemoteMove(from, to, toPiece) {
+    let [res, moves] = makeMove(from, to, toPiece);
     if (res >= 1) {
         myTurn = !myTurn;
         for (let move of moves) {
@@ -76,8 +77,8 @@ function handleRemoteMove(from, to) {
     return false;
 }
 
-function handleLocalMove(from, to) {
-    let [res, moves] = makeMove(from, to);
+function handleLocalMove(from, to, promotionPiece) {
+    let [res, moves] = makeMove(from, to, promotionPiece);
     if (res >= 1) {
         myTurn = !myTurn;
         for (let move of moves) {
@@ -85,7 +86,7 @@ function handleLocalMove(from, to) {
             let moveElems = [getSquareByPosition(fromPosition), getSquareByPosition(toPosition), getSquareByPosition(capturePosition), generatePiece(toPiece)];
             applyMove(moveElems);
         }
-        dataChannel.send(JSON.stringify({type: "move", message: {from, to}}));
+        dataChannel.send(JSON.stringify({type: "move", message: {from, to, promotionPiece}}));
         if (res === 2) {
             dataChannel.send(JSON.stringify({type: "state", message: "checkmate"}));
             addGameStatusMessage(true, "checkmate");

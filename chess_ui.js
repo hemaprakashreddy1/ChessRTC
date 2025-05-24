@@ -1,5 +1,7 @@
 let positionColor;
 let myTurn;
+let selectedPromotionMove;
+let selectedPromotionPiece;
 
 function setColorTurn(color, turn) {
     initializeBoard(color);
@@ -20,6 +22,7 @@ let moves = [];
 function createAllSquares(color) {
     let squares = [];
     const blackHole = document.querySelector("#black-hole");
+    const board = document.querySelector("#board"); 
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             const square = createSquareClass("square");
@@ -44,12 +47,29 @@ function createAllSquares(color) {
                     if (myTurn === false) {
                         blackHole.appendChild(highlightSquare);
                         moves.length = 0;
-                        return;
-                    }
-                    if (isCurrentMovePiece(i * 10 + j)) {
+                    } else if (isCurrentMovePiece(i * 10 + j)) {
                         moves[0] = square;
                     } else {
-                        handleLocalMove(Number(moves[0].dataset.position), i * 10 + j);
+                        let moveOnePosition = Number(moves[0].dataset.position);
+                        if (getPiece(moveOnePosition) === positionColor + 'p') {
+                            if (positionColor === 'w') {
+                                if (row(moveOnePosition) === 1 && i === 0) {
+                                    selectedPromotionMove = [moveOnePosition, i * 10 + j];
+                                    board.appendChild(createPawnPromotionWindow(positionColor));
+                                } else {
+                                    handleLocalMove(moveOnePosition, i * 10 + j, "");
+                                }
+                            } else {
+                                if (row(moveOnePosition) === 6 && i === 7) {
+                                    selectedPromotionMove = [moveOnePosition, i * 10 + j];
+                                    board.appendChild(createPawnPromotionWindow(positionColor));
+                                } else {
+                                    handleLocalMove(moveOnePosition, i * 10 + j, "");
+                                }
+                            }
+                        } else {
+                            handleLocalMove(Number(moves[0].dataset.position), i * 10 + j, "");
+                        }
                         moves.length = 0;
                     }
                 }
@@ -57,7 +77,6 @@ function createAllSquares(color) {
             squares.push(square);
         }
     }
-    const board = document.querySelector("#board"); 
     if (color === 'b') {
         squares.reverse();
     }
@@ -114,6 +133,34 @@ function initializePieces(positions, pieces, color) {
         const square = document.querySelector(".cell-" + positions[i]);
         square.appendChild(generatePiece(color + pieces[i]));
     }
+}
+
+function createPawnPromotionWindow(color) {
+    let transparentWindow = document.createElement('div');
+    transparentWindow.className = 'transparent-window';
+    let flexContainer = document.createElement('div');
+    flexContainer.className = 'flex-container';
+    let pieces = ['q', 'r', 'b', 'n'];
+    for (let piece of pieces) {
+        let square = createSquareClass('square');
+        square.addEventListener('click', () => {
+            selectedPromotionPiece = color + piece;
+        });
+
+        let img = generatePiece(color + piece);
+        square.appendChild(img);
+        flexContainer.appendChild(square);
+    }
+    transparentWindow.appendChild(flexContainer);
+    transparentWindow.addEventListener('click', function() {
+        if (selectedPromotionPiece) {
+            handleLocalMove(selectedPromotionMove[0], selectedPromotionMove[1], selectedPromotionPiece);
+        }
+        selectedPromotionMove = null;
+        selectedPromotionPiece = null;
+        this.remove();
+    });
+    return transparentWindow;
 }
 
 function initializeBoard(color) {

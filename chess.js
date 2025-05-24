@@ -80,7 +80,7 @@ function getPiece(x) {
     return board[row(x)][column(x)];
 }
 
-function makeMove(from, to) {
+function makeMove(from, to, promotionPiece) {
     /*
     return type
     0 move failed
@@ -88,7 +88,7 @@ function makeMove(from, to) {
     2 move success and checkmate
     3 move success and stalemate
     */
-    let [isValid, moves] = validateMove(from, to);
+    let [isValid, moves] = validateMove(from, to, promotionPiece);
     if (isValid) {
         let fromPiece = getPiece(from);
         let color = fromPiece[0];
@@ -137,7 +137,7 @@ function makeMove(from, to) {
     return [0, moves];
 }
 
-function validateMove(from, to) {
+function validateMove(from, to, promotionPiece) {
     if (gameState >= 1) {
         return false;
     }
@@ -157,9 +157,17 @@ function validateMove(from, to) {
     }
 
     let moves = generateMoves(color);
-    for (let move of moves[row(from)][column(from)]) {
-        if (move[0][1] === to) {
-            return [true, move];
+    if (promotionPiece) {
+        for (let move of moves[row(from)][column(from)]) {
+            if (move[0][1] === to && move[0][3] === promotionPiece) {
+                return [true, move];
+            }
+        }
+    } else {
+        for (let move of moves[row(from)][column(from)]) {
+            if (move[0][1] === to) {
+                return [true, move];
+            }
         }
     }
     return [false, null];
@@ -348,6 +356,16 @@ function generateKingMoves(position, color) {
     return moves;
 }
 
+function generatePromotionMoves(color, move) {
+    let promotionMoves = [];
+    let promotionPieces = ['q', 'r', 'b', 'n'];
+    for (let piece of promotionPieces) {
+        let currentMove = [[move[0][0], move[0][1], move[0][2], color + piece]];
+        promotionMoves.push(currentMove);
+    }
+    return promotionMoves;
+}
+
 function generatePawnMoves(position, color) {
     let moves = [];
     let r = row(position);
@@ -362,15 +380,27 @@ function generatePawnMoves(position, color) {
         }
         move = [[position, position + N, position + N, getPiece(position)]];
         if (getPiece(position + N) === "" && !isCheckAfterMove(move, color)) {
-            moves.push(move);
+            if (r === 1) {
+                moves.push(...generatePromotionMoves(color, move));
+            } else {
+                moves.push(move);
+            }
         }
         move = [[position, position + NW, position + NW, getPiece(position)]];
         if (c > 0 && getPiece(position + NW) !== "" && getPiece(position + NW)[0] !== color && !isCheckAfterMove(move, color)) {
-            moves.push(move);
+            if (r === 1) {
+                moves.push(...generatePromotionMoves(color, move));
+            } else {
+                moves.push(move);
+            }
         }
         move = [[position, position + NE, position + NE, getPiece(position)]];
         if (c < 7 && getPiece(position + NE) !== "" && getPiece(position + NE)[0] !== color && !isCheckAfterMove(move, color)) {
-            moves.push(move);
+            if (r === 1) {
+                moves.push(...generatePromotionMoves(color, move));
+            } else {
+                moves.push(move);
+            }
         }
         if (r == 3 && lastMove && lastMove[0][3] === 'bp' && lastMove[0][1] + N + N == lastMove[0][0]) {
             if (position + E === lastMove[0][1]) {
@@ -388,15 +418,27 @@ function generatePawnMoves(position, color) {
         }
         move = [[position, position + S, position + S, getPiece(position)]];
         if (getPiece(position + S) === "" && !isCheckAfterMove(move, color)) {
-            moves.push(move);
+            if (r === 6) {
+                moves.push(...generatePromotionMoves(color, move));
+            } else {
+                moves.push(move);
+            }
         }
         move = [[position, position + SW, position + SW, getPiece(position)]];
         if (c > 0 && getPiece(position + SW) !== "" && getPiece(position + SW)[0] !== color && !isCheckAfterMove(move, color)) {
-            moves.push(move);
+            if (r === 6) {
+                moves.push(...generatePromotionMoves(color, move));
+            } else {
+                moves.push(move);
+            }
         }
         move = [[position, position + SE, position + SE, getPiece(position)]];
         if (c < 7 && getPiece(position + SE) !== "" && getPiece(position + SE)[0] !== color && !isCheckAfterMove(move, color)) {
-            moves.push(move);
+            if (r === 6) {
+                moves.push(...generatePromotionMoves(color, move));
+            } else {
+                moves.push(move);
+            }
         }
         if (r == 4 && lastMove && lastMove[0][3] === 'wp' && lastMove[0][1] + S + S == lastMove[0][0]) {
             if (position + E === lastMove[0][1]) {

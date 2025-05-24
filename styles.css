@@ -5,6 +5,24 @@
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
     border: 2px solid rgb(41, 23, 23);
+    position: relative;
+}
+
+.transparent-window {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(222, 211, 211, 0.5);
+}
+
+.flex-container {
+    height: 20%;
+    aspect-ratio: 4 / 1;
+    position: relative;
+    display: flex;
 }
 
 #black-hole {
