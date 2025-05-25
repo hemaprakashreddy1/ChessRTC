@@ -105,13 +105,13 @@ function makeMove(from, to, promotionPiece) {
                 if (from === 0) {
                     blackCastlePieceMoved[0] = true;
                 } else if(from === 7) {
-                    blackCastlePieceMoved[2] = true;
+                    blackCastlePieceMoved[7] = true;
                 }
             } else {
                 if (from === 70) {
-                    whiteCastlePieceMoved[0] = true;
+                    whiteCastlePieceMoved[70] = true;
                 } else if (from === 77) {
-                    whiteCastlePieceMoved[2] = true;
+                    whiteCastlePieceMoved[77] = true;
                 }
             }
         }
@@ -605,3 +605,108 @@ function isCurrentMovePiece(position) {
 function getGameState() {
     return gameState;
 }
+
+// testing starts here
+
+function modifiedMakeMove(moves) {
+    let castleState = null;
+    let piecesBeforeMove = [];
+    for (let move of moves) {
+        let from = move[0];
+        let capture = move[2];
+        piecesBeforeMove.push([getPiece(from), getPiece(capture)]);
+    }
+
+    let from = moves[0][0];
+    let to = moves[0][1];
+    let fromPiece = getPiece(from);
+    let fromPieceColor = fromPiece[0];
+    if (fromPiece[1] === 'k') {
+        if (fromPieceColor === 'b') {
+            blackKingPosition = to;
+            blackCastlePieceMoved[1] = true;
+            castleState = [...blackCastlePieceMoved];
+        } else {
+            whiteKingPosition = to;
+            whiteCastlePieceMoved[1] = true;
+            castleState = [...whiteCastlePieceMoved];
+        }
+    } else if (fromPiece[1] === 'r') {
+        if (fromPieceColor === 'b') {
+            if (from === 0) {
+                blackCastlePieceMoved[0] = true;
+                castleState = [...blackCastlePieceMoved];
+            } else if(from === 7) {
+                blackCastlePieceMoved[2] = true;
+                castleState = [...blackCastlePieceMoved];
+            }
+        } else {
+            if (from === 70) {
+                whiteCastlePieceMoved[0] = true;
+                castleState = [...whiteCastlePieceMoved];
+            } else if (from === 77) {
+                whiteCastlePieceMoved[2] = true;
+                castleState = [...whiteCastlePieceMoved];
+            }
+        }
+    }
+    for (let move of moves) {
+        let [from, to, capture, toPiece] = move;
+        board[row(from)][column(from)] = "";
+        board[row(capture)][column(capture)] = "";
+        board[row(to)][column(to)] = toPiece;
+    }
+    whiteMove = !whiteMove;
+    let lastMoveCp = lastMove;
+    lastMove = moves;
+    return [castleState, piecesBeforeMove, lastMoveCp];
+}
+
+function undoMove(moves, state) {
+    let [castleState, piecesBeforeMove, lastMoveCp] = state;
+    let fromPiece = piecesBeforeMove[0][0];
+    let color = fromPiece[0];
+    if (fromPiece[1] === 'k') {
+        if (color === 'w') {
+            whiteKingPosition = moves[0][0];
+        } else {
+            blackKingPosition = moves[0][0];
+        }
+    }
+    if (castleState) {
+        if (color === 'w') {
+            whiteCastlePieceMoved = castleState;
+        } else {
+            blackCastlePieceMoved = castleState;
+        }
+    }
+    for (let i = 0; i < moves.length; i++) {
+        let [from, to, capture, _] = moves[i];
+        let [fromPiece, capturePiece] = piecesBeforeMove[i];
+        board[row(from)][column(from)] = fromPiece;
+        board[row(to)][column(to)] = "";
+        board[row(capture)][column(capture)] = capturePiece;
+    }
+    lastMove = lastMoveCp;
+}
+
+let movesCount = 0;
+function search(color, depth) {
+    if (depth === 0) {
+        return;
+    }
+    let generatedMoves = generateMoves(color);
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            for (let move of generatedMoves[i][j]) {
+                movesCount++;
+                let state = modifiedMakeMove(move);
+                search(color === 'w' ? 'b' : 'w', depth - 1);
+                undoMove(move, state);
+            }
+        }
+    }
+}
+
+search('w', 7);
+console.log(movesCount);
