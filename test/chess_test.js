@@ -607,7 +607,9 @@ function getGameState() {
 }
 
 // testing starts here
-
+let games = [];
+let game = [];
+let checkMates = 0;
 function modifiedMakeMove(moves) {
     let castleState = null;
     let piecesBeforeMove = [];
@@ -659,6 +661,11 @@ function modifiedMakeMove(moves) {
     whiteMove = !whiteMove;
     let lastMoveCp = lastMove;
     lastMove = moves;
+    if (isCheckMate(fromPieceColor === 'b' ? 'w' : 'b')) {
+        checkMates++;
+        let currentGame = [...game];
+        games.push({checkMates, currentGame});
+    }
     return [castleState, piecesBeforeMove, lastMoveCp];
 }
 
@@ -700,13 +707,21 @@ function search(color, depth) {
         for (let j = 0; j < 8; j++) {
             for (let move of generatedMoves[i][j]) {
                 movesCount++;
+                game.push(move);
                 let state = modifiedMakeMove(move);
                 search(color === 'w' ? 'b' : 'w', depth - 1);
+                game.pop();
                 undoMove(move, state);
             }
         }
     }
 }
 
-search('w', 7);
-console.log(movesCount);
+const args = process.argv.slice(2);
+let depth = 3;
+if (args.length) {
+    depth = Number(args[0]);
+}
+search('w', depth);
+console.log(JSON.stringify({games}));
+console.log(games.length);
