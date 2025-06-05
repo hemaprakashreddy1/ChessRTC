@@ -677,7 +677,7 @@ function initGame(fen) {
     fullMoves = Number(fullMoves);
 }
 
-initGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq c4 0 1");// testing starts here
+initGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");// testing starts here
 let games = [];
 let game = [];
 let checkMates = 0;
@@ -757,7 +757,6 @@ function modifiedMakeMove(moves) {
 
 function undoMove(moves, state) {
     let [castleState, piecesBeforeMove, enpassantTargetState] = state;
-    enpassantTarget = enpassantTargetState;
     let fromPiece = piecesBeforeMove[0][0];
     let color = fromPiece[0];
     if (fromPiece[1] === 'k') {
@@ -767,6 +766,7 @@ function undoMove(moves, state) {
             blackKingPosition = moves[0][0];
         }
     }
+    enpassantTarget = enpassantTargetState;
     if (color === 'w') {
         whiteCastle = castleState;
     } else {

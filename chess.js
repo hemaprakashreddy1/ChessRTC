@@ -677,4 +677,4 @@ function initGame(fen) {
     fullMoves = Number(fullMoves);
 }
 
-initGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq c4 0 1");
+initGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
