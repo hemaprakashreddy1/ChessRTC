@@ -4,18 +4,17 @@ const oppDirectionOffSets = [S, W, E, N, SW, SE, NW, NE];
 const rookDirections = [N, E, W, S];
 const bishopDirections = [NE, NW, SE, SW];
 
-let whiteKingPosition = 74, blackKingPosition = 4;
 let whiteMove = true;
+let whiteCastle = [true, true]; // [queen castle, king castle]
+let blackCastle = [true, true];
+let whiteKingPosition = 74, blackKingPosition = 4;
 let lastMove;
-let whiteCastlePieceMoved = [false, false, false]; // order : left rook, king, right rook
-let blackCastlePieceMoved = [false, false, false];
 
 let gameState = 0;
 const gameStates = ["on", "check mate", "stale mate"];
 
-let stepsToEdges;
 function generateStepsToEdges() {
-    stepsToEdges = new Array(8);
+    let stepsToEdges = new Array(8);
     for(let row = 0; row < 8; row++) {
         stepsToEdges[row] = new Array(8);
         for(let col = 0; col < 8; col++) {
@@ -39,12 +38,12 @@ function generateStepsToEdges() {
             stepsToEdges[row][col][7] = southWest;
         }
     }
+    return stepsToEdges;
 }
-generateStepsToEdges();
+let stepsToEdges = generateStepsToEdges();
 
-let board;
 function initChessBoard() {
-    board = new Array(8);
+    let board = new Array(8);
     for (let i = 0; i < 8; i++) {
         board[i] = new Array(8);
         for (let j = 0; j < 8; j++) {
@@ -58,9 +57,10 @@ function initChessBoard() {
     for (let i = 0; i < 8; i++) {
         board[1][i] = "bp";
         board[6][i] = "wp";
-    } 
+    }
+    return board;
 }
-initChessBoard();
+let board = initChessBoard();
 
 function row(x) {
     return Math.floor(x / 10);
@@ -95,23 +95,23 @@ function makeMove(from, to, promotionPiece) {
         if (fromPiece[1] === 'k') {
             if (fromPieceColor === 'b') {
                 blackKingPosition = to;
-                blackCastlePieceMoved[1] = true;
+                blackCastle[0] = blackCastle[1] = false;
             } else {
                 whiteKingPosition = to;
-                whiteCastlePieceMoved[1] = true;
+                whiteCastle[0] = whiteCastle[1] = false;
             }
         } else if (fromPiece[1] === 'r') {
             if (fromPieceColor === 'b') {
                 if (from === 0) {
-                    blackCastlePieceMoved[0] = true;
+                    blackCastle[0] = false;
                 } else if(from === 7) {
-                    blackCastlePieceMoved[7] = true;
+                    blackCastle[1] = false;
                 }
             } else {
                 if (from === 70) {
-                    whiteCastlePieceMoved[70] = true;
+                    whiteCastle[0] = false;
                 } else if (from === 77) {
-                    whiteCastlePieceMoved[77] = true;
+                    whiteCastle[1] = false;
                 }
             }
         }
@@ -293,30 +293,28 @@ function generateKingMoves(position, color) {
         }
     }
     
-    let castlePieceMoved;
+    let castle;
     if (color === 'b') {
-        castlePieceMoved = blackCastlePieceMoved;
+        castle = blackCastle;
     } else {
-        castlePieceMoved = whiteCastlePieceMoved;
+        castle = whiteCastle;
     }
-    if (castlePieceMoved[1] === false) {
-        if (castlePieceMoved[0] === false && getPiece(position + W) + getPiece(position + 2 * W) + getPiece(position + 3 * W) === "") {
-            let possibleMoves = [
-                [[position, position + W, position + W, piece]],
-                [[position, position + 2 * W, position + 2 * W, piece], [position + 4 * W, position + W, position + W, color + 'r']]
-            ];
-            if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
-                moves.push(possibleMoves[1]);
-            }
+    if (castle[0] === true && getPiece(position + W) + getPiece(position + 2 * W) + getPiece(position + 3 * W) === "") {
+        let possibleMoves = [
+            [[position, position + W, position + W, piece]],
+            [[position, position + 2 * W, position + 2 * W, piece], [position + 4 * W, position + W, position + W, color + 'r']]
+        ];
+        if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
+            moves.push(possibleMoves[1]);
         }
-        if (castlePieceMoved[2] === false && getPiece(position + E) + getPiece(position + 2 * E) === "") {
-            let possibleMoves = [
-                [[position, position + E, position + E, piece]],
-                [[position, position + 2 * E, position + 2 * E, piece], [position + 3 * E, position + E, position + E, color + 'r']]
-            ];
-            if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
-                moves.push(possibleMoves[1]);
-            }
+    }
+    if (castle[1] === true && getPiece(position + E) + getPiece(position + 2 * E) === "") {
+        let possibleMoves = [
+            [[position, position + E, position + E, piece]],
+            [[position, position + 2 * E, position + 2 * E, piece], [position + 3 * E, position + E, position + E, color + 'r']]
+        ];
+        if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
+            moves.push(possibleMoves[1]);
         }
     }
     return moves;
@@ -606,6 +604,7 @@ function getGameState() {
     return gameState;
 }
 
+
 // testing starts here
 let games = [];
 let game = [];
@@ -626,29 +625,29 @@ function modifiedMakeMove(moves) {
     if (fromPiece[1] === 'k') {
         if (fromPieceColor === 'b') {
             blackKingPosition = to;
-            blackCastlePieceMoved[1] = true;
-            castleState = [...blackCastlePieceMoved];
+            blackCastle[0] = blackCastle[1] = false;
+            castleState = [...blackCastle];
         } else {
             whiteKingPosition = to;
-            whiteCastlePieceMoved[1] = true;
-            castleState = [...whiteCastlePieceMoved];
+            whiteCastle[0] = whiteCastle[1] = false;
+            castleState = [...whiteCastle];
         }
     } else if (fromPiece[1] === 'r') {
         if (fromPieceColor === 'b') {
             if (from === 0) {
-                blackCastlePieceMoved[0] = true;
-                castleState = [...blackCastlePieceMoved];
+                blackCastle[0] = false;
+                castleState = [...blackCastle];
             } else if(from === 7) {
-                blackCastlePieceMoved[2] = true;
-                castleState = [...blackCastlePieceMoved];
+                blackCastle[1] = false;
+                castleState = [...blackCastle];
             }
         } else {
             if (from === 70) {
-                whiteCastlePieceMoved[0] = true;
-                castleState = [...whiteCastlePieceMoved];
+                whiteCastle[0] = false;
+                castleState = [...whiteCastle];
             } else if (from === 77) {
-                whiteCastlePieceMoved[2] = true;
-                castleState = [...whiteCastlePieceMoved];
+                whiteCastle[1] = false;
+                castleState = [...whiteCastle];
             }
         }
     }
@@ -682,9 +681,9 @@ function undoMove(moves, state) {
     }
     if (castleState) {
         if (color === 'w') {
-            whiteCastlePieceMoved = castleState;
+            whiteCastle = castleState;
         } else {
-            blackCastlePieceMoved = castleState;
+            blackCastle = castleState;
         }
     }
     for (let i = 0; i < moves.length; i++) {
@@ -723,5 +722,6 @@ if (args.length) {
     depth = Number(args[0]);
 }
 search('w', depth);
-console.log(JSON.stringify({games}));
-console.log(games.length);
+// console.log(JSON.stringify({games}));
+console.log("checkmates : ", games.length);
+console.log("moves count : ", movesCount);
