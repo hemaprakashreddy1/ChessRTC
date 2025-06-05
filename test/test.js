@@ -643,9 +643,77 @@ function getGameState() {
     return gameState;
 }
 
+function getFen() {
+    let fen = "";
+    let emptysquares = 0;
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            let piece = board[i][j];
+            if (piece === '') {
+                emptysquares++;
+            } else if (piece[0] === 'w') {
+                if (emptysquares) {
+                    fen += emptysquares;
+                    emptysquares = 0;
+                }
+                fen += piece[1].toUpperCase();
+            } else {
+                if (emptysquares) {
+                    fen += emptysquares;
+                    emptysquares = 0;
+                }
+                fen += piece[1];
+            }
+        }
+        if (emptysquares) {
+            fen += emptysquares;
+            emptysquares = 0;
+        }
+        if (i < 7) {
+            fen += '/';
+        }
+    }
+
+    if (whiteMove) {
+        fen += " w";
+    } else {
+        fen += " b";
+    }
+
+    let castleFen = "";
+    if (whiteCastle[1]) {
+        castleFen += 'K';
+    }
+    if (whiteCastle[0]) {
+        castleFen += 'Q';
+    }
+    if (blackCastle[1]) {
+        castleFen += 'k';
+    }
+    if (blackCastle[0]) {
+        castleFen += 'q';
+    }
+    if (castleFen) {
+        fen += " " + castleFen;
+    } else {
+        fen += " -";
+    }
+
+    if (enpassantTarget) {
+        let to = enpassantTarget[0][1];
+        fen += " " + String.fromCharCode(97 + column(to)) + (8 - row(to));
+    } else {
+        fen += " -";
+    }
+    
+    fen += " " + halfMoves + " " + fullMoves;
+
+    return fen;
+}
+
 function initGame(fen) {
     stepsToEdges = generateStepsToEdges();
-    let [piecePlacement, sideToMove, castling, enpassantTargetNotation, halfMoves, fullMoves] = fen.split(" ");
+    let [piecePlacement, sideToMove, castling, enpassantTargetNotation, halfMovesCnt, fullMovesCnt] = fen.split(" ");
     board = initChessBoard(piecePlacement);
     if (sideToMove === 'w') {
         whiteMove = true;
@@ -673,8 +741,8 @@ function initGame(fen) {
             enpassantTarget = [[to + N + N, to, to, "bp"]];
         }
     }
-    halfMoves = Number(halfMoves);
-    fullMoves = Number(fullMoves);
+    halfMoves = Number(halfMovesCnt);
+    fullMoves = Number(fullMovesCnt);
 }
 
 initGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");// testing starts here
