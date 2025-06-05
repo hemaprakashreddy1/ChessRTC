@@ -59,7 +59,7 @@ function createDataChannel(channel) {
 }
 
 function handleRemoteMove(from, to, toPiece) {
-    let [res, moves] = makeMove(from, to, toPiece);
+    let [res, moves] = processMove(from, to, toPiece);
     if (res >= 1) {
         myTurn = !myTurn;
         for (let move of moves) {
@@ -78,7 +78,7 @@ function handleRemoteMove(from, to, toPiece) {
 }
 
 function handleLocalMove(from, to, promotionPiece) {
-    let [res, moves] = makeMove(from, to, promotionPiece);
+    let [res, moves] = processMove(from, to, promotionPiece);
     if (res >= 1) {
         myTurn = !myTurn;
         for (let move of moves) {
