@@ -12,7 +12,7 @@ let enpassantTarget;
 let halfMoves;
 let fullMoves;
 
-let gameState = 0;
+let gameState;
 const gameStates = ["on", "check mate", "stale mate"];
 
 let stepsToEdges;
@@ -115,21 +115,18 @@ function makeMove(from, to, promotionPiece) {
                 whiteKingPosition = to;
                 whiteCastle[0] = whiteCastle[1] = false;
             }
-        } else if (fromPiece[1] === 'r') {
-            if (fromPieceColor === 'b') {
-                if (from === 0) {
-                    blackCastle[0] = false;
-                } else if(from === 7) {
-                    blackCastle[1] = false;
-                }
-            } else {
-                if (from === 70) {
-                    whiteCastle[0] = false;
-                } else if (from === 77) {
-                    whiteCastle[1] = false;
-                }
-            }
         }
+
+        if (from === 0 || to === 0) {
+            blackCastle[0] = false;
+        } else if(from === 7 || to === 7) {
+            blackCastle[1] = false;
+        } else if (from === 70 || to == 70) {
+            whiteCastle[0] = false;
+        } else if (from === 77 || to == 77) {
+            whiteCastle[1] = false;
+        }
+
         for (let move of moves) {
             let [from, to, capture, toPiece] = move;
             board[row(from)][column(from)] = "";
@@ -341,7 +338,7 @@ function generateKingMoves(position, color) {
     if (castle[0] === true && getPiece(position + W) + getPiece(position + 2 * W) + getPiece(position + 3 * W) === "") {
         let possibleMoves = [
             [[position, position + W, position + W, piece]],
-            [[position, position + 2 * W, position + 2 * W, piece], [position + 4 * W, position + W, position + W, color + 'r']]
+            [[position, position + 2 * W, position + 2 * W, piece], [position + 4 * W, position + W, position + W, getPiece(position + 4 * W)]]
         ];
         if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
             moves.push(possibleMoves[1]);
@@ -350,7 +347,7 @@ function generateKingMoves(position, color) {
     if (castle[1] === true && getPiece(position + E) + getPiece(position + 2 * E) === "") {
         let possibleMoves = [
             [[position, position + E, position + E, piece]],
-            [[position, position + 2 * E, position + 2 * E, piece], [position + 3 * E, position + E, position + E, color + 'r']]
+            [[position, position + 2 * E, position + 2 * E, piece], [position + 3 * E, position + E, position + E, getPiece(position + 3 * E)]]
         ];
         if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
             moves.push(possibleMoves[1]);
@@ -712,6 +709,7 @@ function getFen() {
 }
 
 function initGame(fen) {
+    gameState = 0;
     stepsToEdges = generateStepsToEdges();
     let [piecePlacement, sideToMove, castling, enpassantTargetNotation, halfMovesCnt, fullMovesCnt] = fen.split(" ");
     board = initChessBoard(piecePlacement);
@@ -740,6 +738,8 @@ function initGame(fen) {
         } else {
             enpassantTarget = [[to + N + N, to, to, "bp"]];
         }
+    } else {
+        enpassantTarget = null;
     }
     halfMoves = Number(halfMovesCnt);
     fullMoves = Number(fullMovesCnt);
