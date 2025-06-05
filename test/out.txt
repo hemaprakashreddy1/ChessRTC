@@ -1,0 +1,10 @@
+checkmates :  0
+moves count :  20
+checkmates :  0
+moves count :  420
+checkmates :  0
+moves count :  9322
+checkmates :  8
+moves count :  206603
+checkmates :  355
+moves count :  5072212
