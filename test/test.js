@@ -4,15 +4,19 @@ const oppDirectionOffSets = [S, W, E, N, SW, SE, NW, NE];
 const rookDirections = [N, E, W, S];
 const bishopDirections = [NE, NW, SE, SW];
 
-let whiteMove = true;
-let whiteCastle = [true, true]; // [queen castle, king castle]
-let blackCastle = [true, true];
-let whiteKingPosition = 74, blackKingPosition = 4;
-let lastMove;
+let whiteMove;
+let whiteCastle; // [queen castle, king castle]
+let blackCastle;
+let whiteKingPosition, blackKingPosition;
+let enpassantTarget;
+let halfMoves;
+let fullMoves;
 
 let gameState = 0;
 const gameStates = ["on", "check mate", "stale mate"];
 
+let stepsToEdges;
+let board;
 function generateStepsToEdges() {
     let stepsToEdges = new Array(8);
     for(let row = 0; row < 8; row++) {
@@ -40,9 +44,8 @@ function generateStepsToEdges() {
     }
     return stepsToEdges;
 }
-let stepsToEdges = generateStepsToEdges();
 
-function initChessBoard() {
+function initChessBoard(piecePlacement) {
     let board = new Array(8);
     for (let i = 0; i < 8; i++) {
         board[i] = new Array(8);
@@ -50,17 +53,29 @@ function initChessBoard() {
             board[i][j] = "";
         }
     }
-    board[0][0] = "br", board[0][1] = "bn", board[0][2] = "bb", board[0][3] = "bq";
-    board[0][4] = "bk", board[0][5] = "bb", board[0][6] = "bn", board[0][7] = "br";
-    board[7][0] = "wr", board[7][1] = "wn", board[7][2] = "wb", board[7][3] = "wq";
-    board[7][4] = "wk", board[7][5] = "wb", board[7][6] = "wn", board[7][7] = "wr";
-    for (let i = 0; i < 8; i++) {
-        board[1][i] = "bp";
-        board[6][i] = "wp";
+    let i = 0, j = 0;
+    for (let c of piecePlacement) {
+        if (c == '/') {
+            i++;
+            j = 0;
+        } else if (c >= '1' && c <= '9') {
+            j += Number(c);
+        } else if (c >= 'A' && c <= 'Z') {
+            if (c === 'K') {
+                whiteKingPosition = i * 10 + j;
+            }
+            board[i][j] = 'w' + c.toLowerCase();
+            j++;
+        } else if (c >= 'a' && c <= 'z') {
+            if (c === 'k') {
+                blackKingPosition = i * 10 + j;
+            }
+            board[i][j] = 'b' + c;
+            j++;
+        }
     }
     return board;
 }
-let board = initChessBoard();
 
 function row(x) {
     return Math.floor(x / 10);
@@ -121,8 +136,32 @@ function makeMove(from, to, promotionPiece) {
             board[row(capture)][column(capture)] = "";
             board[row(to)][column(to)] = toPiece;
         }
+
+        if (fromPiece[1] === 'p') {
+            if (fromPieceColor === 'w') {
+                if (moves[0][0] === moves[0][1] + S + S) {
+                    enpassantTarget = moves;
+                } else {
+                    enpassantTarget = null;
+                }
+            } else {
+                if (moves[0][0] === moves[0][1] + N + N) {
+                    enpassantTarget = moves;
+                } else {
+                    enpassantTarget = null;
+                }
+            }
+        }
+
+        let capturePiece = getPiece(moves[0][2]);
+        if (fromPiece[1] === 'p' || capturePiece) {
+            halfMoves = 0;
+        }
+        if (!whiteMove) {
+            fullMoves++;
+        }
+
         whiteMove = !whiteMove;
-        lastMove = moves;
         
         let oppositeColor = fromPieceColor === 'b' ? 'w' : 'b';
         if (isCheckMate(oppositeColor)) {
@@ -366,13 +405,13 @@ function generatePawnMoves(position, color) {
                 moves.push(move);
             }
         }
-        if (r == 3 && lastMove && lastMove[0][3] === 'bp' && lastMove[0][1] + N + N == lastMove[0][0]) {
-            if (position + E === lastMove[0][1]) {
+        if (r == 3 && enpassantTarget && enpassantTarget[0][3] === 'bp' && enpassantTarget[0][1] + N + N == enpassantTarget[0][0]) {
+            if (position + E === enpassantTarget[0][1]) {
                 move = [[position, position + NE, position + E, getPiece(position)]];
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
                 }
-            } else if (position + W === lastMove[0][1]) {
+            } else if (position + W === enpassantTarget[0][1]) {
                 move = [[position, position + NW, position + W, getPiece(position)]];
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
@@ -410,13 +449,13 @@ function generatePawnMoves(position, color) {
                 moves.push(move);
             }
         }
-        if (r == 4 && lastMove && lastMove[0][3] === 'wp' && lastMove[0][1] + S + S == lastMove[0][0]) {
-            if (position + E === lastMove[0][1]) {
+        if (r == 4 && enpassantTarget && enpassantTarget[0][3] === 'wp' && enpassantTarget[0][1] + S + S == enpassantTarget[0][0]) {
+            if (position + E === enpassantTarget[0][1]) {
                 move = [[position, position + SE, position + E, getPiece(position)]];
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
                 }
-            } else if (position + W === lastMove[0][1]) {
+            } else if (position + W === enpassantTarget[0][1]) {
                 move = [[position, position + SW, position + W, getPiece(position)]];
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
@@ -603,7 +642,42 @@ function isCurrentMovePiece(position) {
 function getGameState() {
     return gameState;
 }
-// testing starts here
+
+function initGame(fen) {
+    stepsToEdges = generateStepsToEdges();
+    let [piecePlacement, sideToMove, castling, enpassantTargetNotation, halfMoves, fullMoves] = fen.split(" ");
+    board = initChessBoard(piecePlacement);
+    if (sideToMove === 'w') {
+        whiteMove = true;
+    } else {
+        whiteMove = false;
+    }
+    whiteCastle = [false,false];
+    blackCastle = [false, false];
+    for (c of castling) {
+        if (c === 'K') {
+            whiteCastle[1] = true;
+        } else if(c === 'Q') {
+            whiteCastle[0] = true;
+        } else if (c === 'k') {
+            blackCastle[1] = true;
+        } else if (c === 'q') {
+            blackCastle[0] = true;
+        }
+    }
+    if (enpassantTargetNotation !== '-') {
+        let to = (7 - (Number(enpassantTargetNotation[1]) - 1)) * 10 + (enpassantTargetNotation.charCodeAt(0) - "a".charCodeAt(0));
+        if (whiteMove) {
+            enpassantTarget = [[to + S + S, to, to, "wp"]];
+        } else {
+            enpassantTarget = [[to + N + N, to, to, "bp"]];
+        }
+    }
+    halfMoves = Number(halfMoves);
+    fullMoves = Number(fullMoves);
+}
+
+initGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq c4 0 1");// testing starts here
 let games = [];
 let game = [];
 let checkMates = 0;
@@ -620,32 +694,31 @@ function modifiedMakeMove(moves) {
     let to = moves[0][1];
     let fromPiece = getPiece(from);
     let fromPieceColor = fromPiece[0];
+    if (fromPieceColor === 'w') {
+        castleState = [...whiteCastle];
+    } else {
+        castleState = [...blackCastle];
+    }
     if (fromPiece[1] === 'k') {
         if (fromPieceColor === 'b') {
             blackKingPosition = to;
             blackCastle[0] = blackCastle[1] = false;
-            castleState = [...blackCastle];
         } else {
             whiteKingPosition = to;
             whiteCastle[0] = whiteCastle[1] = false;
-            castleState = [...whiteCastle];
         }
     } else if (fromPiece[1] === 'r') {
         if (fromPieceColor === 'b') {
             if (from === 0) {
                 blackCastle[0] = false;
-                castleState = [...blackCastle];
             } else if(from === 7) {
                 blackCastle[1] = false;
-                castleState = [...blackCastle];
             }
         } else {
             if (from === 70) {
                 whiteCastle[0] = false;
-                castleState = [...whiteCastle];
             } else if (from === 77) {
                 whiteCastle[1] = false;
-                castleState = [...whiteCastle];
             }
         }
     }
@@ -655,19 +728,36 @@ function modifiedMakeMove(moves) {
         board[row(capture)][column(capture)] = "";
         board[row(to)][column(to)] = toPiece;
     }
+
+    let enpassantTargetState = enpassantTarget;
+    if (fromPiece[1] === 'p') {
+        if (fromPieceColor === 'w') {
+            if (moves[0][0] === moves[0][1] + S + S) {
+                enpassantTarget = moves;
+            } else {
+                enpassantTarget = null;
+            }
+        } else {
+            if (moves[0][0] === moves[0][1] + N + N) {
+                enpassantTarget = moves;
+            } else {
+                enpassantTarget = null;
+            }
+        }
+    }
+
     whiteMove = !whiteMove;
-    let lastMoveCp = lastMove;
-    lastMove = moves;
     if (isCheckMate(fromPieceColor === 'b' ? 'w' : 'b')) {
         checkMates++;
         let currentGame = [...game];
         games.push({checkMates, currentGame});
     }
-    return [castleState, piecesBeforeMove, lastMoveCp];
+    return [castleState, piecesBeforeMove, enpassantTargetState];
 }
 
 function undoMove(moves, state) {
-    let [castleState, piecesBeforeMove, lastMoveCp] = state;
+    let [castleState, piecesBeforeMove, enpassantTargetState] = state;
+    enpassantTarget = enpassantTargetState;
     let fromPiece = piecesBeforeMove[0][0];
     let color = fromPiece[0];
     if (fromPiece[1] === 'k') {
@@ -677,12 +767,10 @@ function undoMove(moves, state) {
             blackKingPosition = moves[0][0];
         }
     }
-    if (castleState) {
-        if (color === 'w') {
-            whiteCastle = castleState;
-        } else {
-            blackCastle = castleState;
-        }
+    if (color === 'w') {
+        whiteCastle = castleState;
+    } else {
+        blackCastle = castleState;
     }
     for (let i = 0; i < moves.length; i++) {
         let [from, to, capture, _] = moves[i];
@@ -691,7 +779,6 @@ function undoMove(moves, state) {
         board[row(to)][column(to)] = "";
         board[row(capture)][column(capture)] = capturePiece;
     }
-    lastMove = lastMoveCp;
 }
 
 let movesCount = 0;

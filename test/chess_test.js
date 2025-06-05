@@ -14,32 +14,31 @@ function modifiedMakeMove(moves) {
     let to = moves[0][1];
     let fromPiece = getPiece(from);
     let fromPieceColor = fromPiece[0];
+    if (fromPieceColor === 'w') {
+        castleState = [...whiteCastle];
+    } else {
+        castleState = [...blackCastle];
+    }
     if (fromPiece[1] === 'k') {
         if (fromPieceColor === 'b') {
             blackKingPosition = to;
             blackCastle[0] = blackCastle[1] = false;
-            castleState = [...blackCastle];
         } else {
             whiteKingPosition = to;
             whiteCastle[0] = whiteCastle[1] = false;
-            castleState = [...whiteCastle];
         }
     } else if (fromPiece[1] === 'r') {
         if (fromPieceColor === 'b') {
             if (from === 0) {
                 blackCastle[0] = false;
-                castleState = [...blackCastle];
             } else if(from === 7) {
                 blackCastle[1] = false;
-                castleState = [...blackCastle];
             }
         } else {
             if (from === 70) {
                 whiteCastle[0] = false;
-                castleState = [...whiteCastle];
             } else if (from === 77) {
                 whiteCastle[1] = false;
-                castleState = [...whiteCastle];
             }
         }
     }
@@ -49,19 +48,35 @@ function modifiedMakeMove(moves) {
         board[row(capture)][column(capture)] = "";
         board[row(to)][column(to)] = toPiece;
     }
+
+    let enpassantTargetState = enpassantTarget;
+    if (fromPiece[1] === 'p') {
+        if (fromPieceColor === 'w') {
+            if (moves[0][0] === moves[0][1] + S + S) {
+                enpassantTarget = moves;
+            } else {
+                enpassantTarget = null;
+            }
+        } else {
+            if (moves[0][0] === moves[0][1] + N + N) {
+                enpassantTarget = moves;
+            } else {
+                enpassantTarget = null;
+            }
+        }
+    }
+
     whiteMove = !whiteMove;
-    let lastMoveCp = lastMove;
-    lastMove = moves;
     if (isCheckMate(fromPieceColor === 'b' ? 'w' : 'b')) {
         checkMates++;
         let currentGame = [...game];
         games.push({checkMates, currentGame});
     }
-    return [castleState, piecesBeforeMove, lastMoveCp];
+    return [castleState, piecesBeforeMove, enpassantTargetState];
 }
 
 function undoMove(moves, state) {
-    let [castleState, piecesBeforeMove, lastMoveCp] = state;
+    let [castleState, piecesBeforeMove, enpassantTargetState] = state;
     let fromPiece = piecesBeforeMove[0][0];
     let color = fromPiece[0];
     if (fromPiece[1] === 'k') {
@@ -71,12 +86,11 @@ function undoMove(moves, state) {
             blackKingPosition = moves[0][0];
         }
     }
-    if (castleState) {
-        if (color === 'w') {
-            whiteCastle = castleState;
-        } else {
-            blackCastle = castleState;
-        }
+    enpassantTarget = enpassantTargetState;
+    if (color === 'w') {
+        whiteCastle = castleState;
+    } else {
+        blackCastle = castleState;
     }
     for (let i = 0; i < moves.length; i++) {
         let [from, to, capture, _] = moves[i];
@@ -85,7 +99,6 @@ function undoMove(moves, state) {
         board[row(to)][column(to)] = "";
         board[row(capture)][column(capture)] = capturePiece;
     }
-    lastMove = lastMoveCp;
 }
 
 let movesCount = 0;
