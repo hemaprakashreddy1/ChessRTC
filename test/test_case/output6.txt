@@ -1,0 +1,5 @@
+moves count :  44
+moves count :  1486
+moves count :  62379
+moves count :  2103487
+moves count :  89941194

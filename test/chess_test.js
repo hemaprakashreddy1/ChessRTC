@@ -57,8 +57,11 @@ function search(color, depth) {
 }
 
 const args = process.argv.slice(2);
-if (args.length) {
+let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+if (args.length === 2) {
     searchDepth = Number(args[0]);
+    fen = args[1];
 }
+// initGame(fen);
 let movesCount = search(whiteMove ? 'w' : 'b', searchDepth);
 console.log("moves count : ", movesCount);
