@@ -343,28 +343,30 @@ function generateKingMoves(position, color) {
     } else {
         castle = whiteCastle;
     }
-    if (castle[0] === true && getPiece(position + W) + getPiece(position + 2 * W) + getPiece(position + 3 * W) === "") {
-        let possibleMoves = [
-            [[position, position + W, position + W, piece, piece, getPiece(position + W)]],
-            [
-                [position, position + 2 * W, position + 2 * W, piece, piece, getPiece(position + 2 * W)], 
-                [position + 4 * W, position + W, position + W, getPiece(position + 4 * W), getPiece(position + 4 * W), getPiece(position + W)]
-            ]
-        ];
-        if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
-            moves.push(possibleMoves[1]);
+    if (!isCheck(position, color)) {
+        if (castle[0] === true && getPiece(position + W) + getPiece(position + 2 * W) + getPiece(position + 3 * W) === "") {
+            let possibleMoves = [
+                [[position, position + W, position + W, piece, piece, getPiece(position + W)]],
+                [
+                    [position, position + 2 * W, position + 2 * W, piece, piece, getPiece(position + 2 * W)], 
+                    [position + 4 * W, position + W, position + W, getPiece(position + 4 * W), getPiece(position + 4 * W), getPiece(position + W)]
+                ]
+            ];
+            if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
+                moves.push(possibleMoves[1]);
+            }
         }
-    }
-    if (castle[1] === true && getPiece(position + E) + getPiece(position + 2 * E) === "") {
-        let possibleMoves = [
-            [[position, position + E, position + E, piece, piece, getPiece(position + E)]],
-            [
-                [position, position + 2 * E, position + 2 * E, piece, piece, getPiece(position + 2 * E)], 
-                [position + 3 * E, position + E, position + E, getPiece(position + 3 * E), getPiece(position + 3 * E), getPiece(position + E)]
-            ]
-        ];
-        if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
-            moves.push(possibleMoves[1]);
+        if (castle[1] === true && getPiece(position + E) + getPiece(position + 2 * E) === "") {
+            let possibleMoves = [
+                [[position, position + E, position + E, piece, piece, getPiece(position + E)]],
+                [
+                    [position, position + 2 * E, position + 2 * E, piece, piece, getPiece(position + 2 * E)], 
+                    [position + 3 * E, position + E, position + E, getPiece(position + 3 * E), getPiece(position + 3 * E), getPiece(position + E)]
+                ]
+            ];
+            if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
+                moves.push(possibleMoves[1]);
+            }
         }
     }
     return moves;
@@ -654,6 +656,10 @@ function getGameState() {
     return gameState;
 }
 
+function getAlgebraicNotation(x) {
+    return String.fromCharCode(97 + column(x)) + (8 - row(x));
+}
+
 function getFen() {
     let fen = "";
     let emptysquares = 0;
@@ -712,7 +718,7 @@ function getFen() {
 
     if (enpassantTarget) {
         let to = enpassantTarget[0][1];
-        fen += " " + String.fromCharCode(97 + column(to)) + (8 - row(to));
+        fen += " " + getAlgebraicNotation(to);
     } else {
         fen += " -";
     }
@@ -792,13 +798,8 @@ function generateUndoState() {
     return [blackCastleState, whiteCastleState, enpassantTargetState, halfMoves, fullMoves, gameState];
 }
 
-
-
-function getAlgebraicNotation(x) {
-    return String.fromCharCode(97 + column(x)) + (8 - row(x));
-}
-
 let searchDepth = 1;
+let displayStartCounts = false;
 
 function search(color, depth) {
     if (depth === 0) {
@@ -812,9 +813,9 @@ function search(color, depth) {
                 let state = generateUndoState();
                 makeMove(move);
                 let currentMoves = search(color === 'w' ? 'b' : 'w', depth - 1);
-                // if (searchDepth === depth) {
-                //     console.log(getAlgebraicNotation(move[0][0]) + getAlgebraicNotation(move[0][1]) + " : " + currentMoves);
-                // }
+                if (displayStartCounts && searchDepth === depth) {
+                    console.log(getAlgebraicNotation(move[0][0]) + getAlgebraicNotation(move[0][1]) + " : " + currentMoves);
+                }
                 movesCount += currentMoves;
                 undoMove(move, state);
             }

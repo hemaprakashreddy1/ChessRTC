@@ -30,13 +30,8 @@ function generateUndoState() {
     return [blackCastleState, whiteCastleState, enpassantTargetState, halfMoves, fullMoves, gameState];
 }
 
-
-
-function getAlgebraicNotation(x) {
-    return String.fromCharCode(97 + column(x)) + (8 - row(x));
-}
-
 let searchDepth = 1;
+let displayStartCounts = false;
 
 function search(color, depth) {
     if (depth === 0) {
@@ -50,9 +45,9 @@ function search(color, depth) {
                 let state = generateUndoState();
                 makeMove(move);
                 let currentMoves = search(color === 'w' ? 'b' : 'w', depth - 1);
-                // if (searchDepth === depth) {
-                //     console.log(getAlgebraicNotation(move[0][0]) + getAlgebraicNotation(move[0][1]) + " : " + currentMoves);
-                // }
+                if (displayStartCounts && searchDepth === depth) {
+                    console.log(getAlgebraicNotation(move[0][0]) + getAlgebraicNotation(move[0][1]) + " : " + currentMoves);
+                }
                 movesCount += currentMoves;
                 undoMove(move, state);
             }
