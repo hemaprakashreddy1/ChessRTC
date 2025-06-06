@@ -62,5 +62,5 @@ let depth = 1;
 if (args.length) {
     depth = Number(args[0]);
 }
-let movesCount = search('w', depth);
+let movesCount = search(whiteMove ? 'w' : 'b', depth);
 console.log("moves count : ", movesCount);

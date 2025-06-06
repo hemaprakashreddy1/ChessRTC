@@ -121,7 +121,7 @@ function makeMove(moves) {
     }
 
     for (let move of moves) {
-        let [from, to, capture, toPiece] = move;
+        let [from, to, capture, fromPiece, toPiece, capturePiece] = move;
         board[row(from)][column(from)] = "";
         board[row(capture)][column(capture)] = "";
         board[row(to)][column(to)] = toPiece;
@@ -143,7 +143,7 @@ function makeMove(moves) {
         }
     }
 
-    let capturePiece = getPiece(moves[0][2]);
+    let capturePiece = moves[0][4];
     if (fromPiece[1] === 'p' || capturePiece) {
         halfMoves = 0;
     }
@@ -357,7 +357,7 @@ function generateKingMoves(position, color) {
     }
     if (castle[1] === true && getPiece(position + E) + getPiece(position + 2 * E) === "") {
         let possibleMoves = [
-            [[position, position + E, position + E, piece]],
+            [[position, position + E, position + E, piece, piece, getPiece(position + E)]],
             [
                 [position, position + 2 * E, position + 2 * E, piece, piece, getPiece(position + 2 * E)], 
                 [position + 3 * E, position + E, position + E, getPiece(position + 3 * E), getPiece(position + 3 * E), getPiece(position + E)]
@@ -824,5 +824,5 @@ let depth = 1;
 if (args.length) {
     depth = Number(args[0]);
 }
-let movesCount = search('w', depth);
+let movesCount = search(whiteMove ? 'w' : 'b', depth);
 console.log("moves count : ", movesCount);
