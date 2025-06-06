@@ -512,12 +512,6 @@ function generateLooseCrossPawnMoves(position, color) {
     return moves;
 }
 
-/*
-    move = {from, to, capture, toPiece}
-    from, to for normal move
-    capture position for en passant
-    toPiece for promotion piece
- */
 function generateMoves(color) {
     let generatedMoves = [];
     for (let i = 0; i < 8; i++) {
