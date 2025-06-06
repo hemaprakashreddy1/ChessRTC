@@ -512,12 +512,6 @@ function generateLooseCrossPawnMoves(position, color) {
     return moves;
 }
 
-/*
-    move = {from, to, capture, toPiece}
-    from, to for normal move
-    capture position for en passant
-    toPiece for promotion piece
- */
 function generateMoves(color) {
     let generatedMoves = [];
     for (let i = 0; i < 8; i++) {
@@ -767,7 +761,10 @@ function initGame(fen) {
 
 initGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");// testing starts here
 function undoMove(moves, state) {
-    let [castleState, enpassantTargetState] = state;
+    let [castleState, enpassantTargetState, currentHalfMoves, currentFullMoves, currentGameState] = state;
+    halfMoves = currentHalfMoves;
+    fullMoves = currentFullMoves;
+    gameState = currentGameState;
     let fromPiece = moves[0][3];
     let color = fromPiece[0];
     if (fromPiece[1] === 'k') {
@@ -783,8 +780,8 @@ function undoMove(moves, state) {
     } else {
         blackCastle = castleState;
     }
-    for (let i = 0; i < moves.length; i++) {
-        let [from, to, capture, fromPiece, toPiece, capturePiece] = moves[i];
+    for (let move of moves) {
+        let [from, to, capture, fromPiece, toPiece, capturePiece] = move;
         board[row(from)][column(from)] = fromPiece;
         board[row(to)][column(to)] = "";
         board[row(capture)][column(capture)] = capturePiece;
@@ -800,7 +797,7 @@ function generateUndoState(moves) {
         castleState = [...blackCastle];
     }
     let enpassantTargetState = enpassantTarget;
-    return [castleState, enpassantTargetState];
+    return [castleState, enpassantTargetState, halfMoves, fullMoves, gameState];
 }
 
 function search(color, depth) {
