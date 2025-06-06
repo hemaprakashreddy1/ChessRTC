@@ -127,18 +127,15 @@ function makeMove(moves) {
         board[row(to)][column(to)] = toPiece;
     }
 
+    enpassantTarget = null;
     if (fromPiece[1] === 'p') {
         if (fromPieceColor === 'w') {
             if (moves[0][0] === moves[0][1] + S + S) {
                 enpassantTarget = moves;
-            } else {
-                enpassantTarget = null;
             }
         } else {
             if (moves[0][0] === moves[0][1] + N + N) {
                 enpassantTarget = moves;
-            } else {
-                enpassantTarget = null;
             }
         }
     }
@@ -152,7 +149,6 @@ function makeMove(moves) {
     }
 
     whiteMove = !whiteMove;
-
 }
 
 function processMove(from, to, promotionPiece) {
@@ -166,6 +162,7 @@ function processMove(from, to, promotionPiece) {
     let [isValid, moves] = validateMove(from, to, promotionPiece);
     if (isValid) {
         makeMove(moves);
+        let fromPieceColor = getPiece(from)[0];
         let oppositeColor = fromPieceColor === 'b' ? 'w' : 'b';
         if (isCheckMate(oppositeColor)) {
             gameState = 1;
@@ -471,7 +468,7 @@ function generatePawnMoves(position, color) {
                 }
             }
         }
-        if (r == 4 && enpassantTarget && enpassantTarget[0][3] === 'wp' && enpassantTarget[0][1] + S + S == enpassantTarget[0][0]) {
+        if (r == 4 && enpassantTarget && enpassantTarget[0][3] === 'wp' && enpassantTarget[0][1] + S + S === enpassantTarget[0][0]) {
             if (position + E === enpassantTarget[0][1]) {
                 move = [[position, position + SE, position + E, piece, piece, getPiece(position + E)]];
                 if (!isCheckAfterMove(move, color)) {
@@ -634,8 +631,8 @@ function isCheckAfterMove(moves, color) {
 
     let check = isCheck(kingPosition, color);
 
-    for (let i = 0; i < moves.length; i++) {
-        let [from, to, capture, fromPiece, toPiece, capturePiece] = moves[i];
+    for (let move of moves) {
+        let [from, to, capture, fromPiece, toPiece, capturePiece] = move;
         board[row(from)][column(from)] = fromPiece;
         board[row(to)][column(to)] = "";
         board[row(capture)][column(capture)] = capturePiece;
