@@ -200,7 +200,7 @@ function validateMove(from, to, promotionPiece) {
     let moves = generateMoves(fromPieceColor);
     if (promotionPiece) {
         for (let move of moves[row(from)][column(from)]) {
-            if (move[0][1] === to && move[0][3] === promotionPiece) {
+            if (move[0][1] === to && move[0][4] === promotionPiece) {
                 return [true, move];
             }
         }
@@ -225,7 +225,7 @@ function generateStraightMoves(position, color) {
         for (let i = 1; i <= totalSteps; i++) {
             currentPosition += directionOffSet;
             let currentPiece = getPiece(currentPosition);
-            let move = [[position, currentPosition, currentPosition, piece]];
+            let move = [[position, currentPosition, currentPosition, piece, piece, currentPiece]];
             if (currentPiece == "") {
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
@@ -245,6 +245,7 @@ function generateStraightMoves(position, color) {
 function generateCrossMoves(position, color) {
     let moves = [];
     let startDir = 4, endDir = 7;
+    let piece = getPiece(position);
     for (let dir = startDir; dir <= endDir; dir++) {
         let directionOffSet = directionOffSets[dir];
         let totalSteps = stepsToEdges[row(position)][column(position)][dir];
@@ -252,7 +253,7 @@ function generateCrossMoves(position, color) {
         for (let i = 1; i <= totalSteps; i++) {
             currentPosition += directionOffSet;
             let currentPiece = getPiece(currentPosition);
-            let move = [[position, currentPosition, currentPosition, getPiece(position)]];
+            let move = [[position, currentPosition, currentPosition, piece, piece, currentPiece]];
             if (currentPiece == "") {
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
@@ -281,10 +282,11 @@ function generateKnightMoves(position, color) {
     t[7] = position + S + W + W;
 
     let moves = [];
+    let fromPiece = getPiece(position);
     for (let toPos of t) {
         if (isValidPos(toPos)) {
             let toPiece = getPiece(toPos);
-            let move = [[position, toPos, toPos, getPiece(position)]];
+            let move = [[position, toPos, toPos, fromPiece, fromPiece, getPiece(toPos)]];
             if ((toPiece === "" || toPiece[0] !== color) && !isCheckAfterMove(move, color)) {
                 moves.push(move);
             }
@@ -327,7 +329,7 @@ function generateKingMoves(position, color) {
             let currentPiece = getPiece(currentPosition);
             let currentPieceColor = currentPiece[0];
             if (currentPiece === "" || currentPieceColor !== color) {
-                let move = [[position, currentPosition, currentPosition, piece]];
+                let move = [[position, currentPosition, currentPosition, piece, piece, currentPiece]];
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
                 }
@@ -343,8 +345,11 @@ function generateKingMoves(position, color) {
     }
     if (castle[0] === true && getPiece(position + W) + getPiece(position + 2 * W) + getPiece(position + 3 * W) === "") {
         let possibleMoves = [
-            [[position, position + W, position + W, piece]],
-            [[position, position + 2 * W, position + 2 * W, piece], [position + 4 * W, position + W, position + W, getPiece(position + 4 * W)]]
+            [[position, position + W, position + W, piece, piece, getPiece(position + W)]],
+            [
+                [position, position + 2 * W, position + 2 * W, piece, piece, getPiece(position + 2 * W)], 
+                [position + 4 * W, position + W, position + W, getPiece(position + 4 * W), getPiece(position + 4 * W), getPiece(position + W)]
+            ]
         ];
         if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
             moves.push(possibleMoves[1]);
@@ -353,7 +358,10 @@ function generateKingMoves(position, color) {
     if (castle[1] === true && getPiece(position + E) + getPiece(position + 2 * E) === "") {
         let possibleMoves = [
             [[position, position + E, position + E, piece]],
-            [[position, position + 2 * E, position + 2 * E, piece], [position + 3 * E, position + E, position + E, getPiece(position + 3 * E)]]
+            [
+                [position, position + 2 * E, position + 2 * E, piece, piece, getPiece(position + 2 * E)], 
+                [position + 3 * E, position + E, position + E, getPiece(position + 3 * E), getPiece(position + 3 * E), getPiece(position + E)]
+            ]
         ];
         if (!isCheckAfterMove(possibleMoves[0], color) && !isCheckAfterMove(possibleMoves[1], color)) {
             moves.push(possibleMoves[1]);
@@ -366,7 +374,7 @@ function generatePromotionMoves(color, move) {
     let promotionMoves = [];
     let promotionPieces = ['q', 'r', 'b', 'n'];
     for (let piece of promotionPieces) {
-        let currentMove = [[move[0][0], move[0][1], move[0][2], color + piece]];
+        let currentMove = [[move[0][0], move[0][1], move[0][2], color + 'p', color + piece, getPiece(move[0][2])]];
         promotionMoves.push(currentMove);
     }
     return promotionMoves;
@@ -376,15 +384,16 @@ function generatePawnMoves(position, color) {
     let moves = [];
     let r = row(position);
     let c = column(position);
+    let piece = getPiece(position);
     let move;
     if (color === 'w') {
         if (r === 6) {
-            move = [[position, position + N + N, position + N + N, getPiece(position)]];
+            move = [[position, position + N + N, position + N + N, piece, piece, getPiece(position + N + N)]];
             if (getPiece(position + N) === "" && getPiece(position + N + N) === "" && !isCheckAfterMove(move, color)) {
                 moves.push(move);
             }
         }
-        move = [[position, position + N, position + N, getPiece(position)]];
+        move = [[position, position + N, position + N, piece, piece, getPiece(position + N)]];
         if (getPiece(position + N) === "" && !isCheckAfterMove(move, color)) {
             if (r === 1) {
                 moves.push(...generatePromotionMoves(color, move));
@@ -392,30 +401,34 @@ function generatePawnMoves(position, color) {
                 moves.push(move);
             }
         }
-        move = [[position, position + NW, position + NW, getPiece(position)]];
-        if (c > 0 && getPiece(position + NW) !== "" && getPiece(position + NW)[0] !== color && !isCheckAfterMove(move, color)) {
-            if (r === 1) {
-                moves.push(...generatePromotionMoves(color, move));
-            } else {
-                moves.push(move);
+        if (c > 0 && getPiece(position + NW) !== "" && getPiece(position + NW)[0] !== color) {
+            move = [[position, position + NW, position + NW, piece, piece, getPiece(position + NW)]];
+            if (!isCheckAfterMove(move, color)) {
+                if (r === 1) {
+                    moves.push(...generatePromotionMoves(color, move));
+                } else {
+                    moves.push(move);
+                }
             }
         }
-        move = [[position, position + NE, position + NE, getPiece(position)]];
-        if (c < 7 && getPiece(position + NE) !== "" && getPiece(position + NE)[0] !== color && !isCheckAfterMove(move, color)) {
-            if (r === 1) {
-                moves.push(...generatePromotionMoves(color, move));
-            } else {
-                moves.push(move);
+        if (c < 7 && getPiece(position + NE) !== "" && getPiece(position + NE)[0] !== color) {
+            move = [[position, position + NE, position + NE, piece, piece, getPiece(position + NE)]];
+            if (!isCheckAfterMove(move, color)) {
+                if (r === 1) {
+                    moves.push(...generatePromotionMoves(color, move));
+                } else {
+                    moves.push(move);
+                }
             }
         }
         if (r == 3 && enpassantTarget && enpassantTarget[0][3] === 'bp' && enpassantTarget[0][1] + N + N == enpassantTarget[0][0]) {
             if (position + E === enpassantTarget[0][1]) {
-                move = [[position, position + NE, position + E, getPiece(position)]];
+                move = [[position, position + NE, position + E, piece, piece, getPiece(position + E)]];
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
                 }
             } else if (position + W === enpassantTarget[0][1]) {
-                move = [[position, position + NW, position + W, getPiece(position)]];
+                move = [[position, position + NW, position + W, piece, piece, getPiece(position + W)]];
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
                 }
@@ -423,12 +436,12 @@ function generatePawnMoves(position, color) {
         }
     } else {
         if (r == 1) {
-            move = [[position, position + S + S, position + S + S, getPiece(position)]];
+            move = [[position, position + S + S, position + S + S, piece, piece, getPiece(position + S + S)]];
             if (getPiece(position + S) === "" && getPiece(position + S + S) === "" && !isCheckAfterMove(move, color)) {
                 moves.push(move);
             }
         }
-        move = [[position, position + S, position + S, getPiece(position)]];
+        move = [[position, position + S, position + S, piece, piece, getPiece(position + S)]];
         if (getPiece(position + S) === "" && !isCheckAfterMove(move, color)) {
             if (r === 6) {
                 moves.push(...generatePromotionMoves(color, move));
@@ -436,30 +449,34 @@ function generatePawnMoves(position, color) {
                 moves.push(move);
             }
         }
-        move = [[position, position + SW, position + SW, getPiece(position)]];
-        if (c > 0 && getPiece(position + SW) !== "" && getPiece(position + SW)[0] !== color && !isCheckAfterMove(move, color)) {
-            if (r === 6) {
-                moves.push(...generatePromotionMoves(color, move));
-            } else {
-                moves.push(move);
+        if (c > 0 && getPiece(position + SW) !== "" && getPiece(position + SW)[0] !== color) {
+            move = [[position, position + SW, position + SW, piece, piece, getPiece(position + SW)]];
+            if (!isCheckAfterMove(move, color)) {
+                if (r === 6) {
+                    moves.push(...generatePromotionMoves(color, move));
+                } else {
+                    moves.push(move);
+                }
             }
         }
-        move = [[position, position + SE, position + SE, getPiece(position)]];
-        if (c < 7 && getPiece(position + SE) !== "" && getPiece(position + SE)[0] !== color && !isCheckAfterMove(move, color)) {
-            if (r === 6) {
-                moves.push(...generatePromotionMoves(color, move));
-            } else {
-                moves.push(move);
+        if (c < 7 && getPiece(position + SE) !== "" && getPiece(position + SE)[0] !== color) {
+            move = [[position, position + SE, position + SE, piece, piece, getPiece(position + SE)]];
+            if (!isCheckAfterMove(move, color)) {
+                if (r === 6) {
+                    moves.push(...generatePromotionMoves(color, move));
+                } else {
+                    moves.push(move);
+                }
             }
         }
         if (r == 4 && enpassantTarget && enpassantTarget[0][3] === 'wp' && enpassantTarget[0][1] + S + S == enpassantTarget[0][0]) {
             if (position + E === enpassantTarget[0][1]) {
-                move = [[position, position + SE, position + E, getPiece(position)]];
+                move = [[position, position + SE, position + E, piece, piece, getPiece(position + E)]];
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
                 }
             } else if (position + W === enpassantTarget[0][1]) {
-                move = [[position, position + SW, position + W, getPiece(position)]];
+                move = [[position, position + SW, position + W, piece, piece, getPiece(position + W)]];
                 if (!isCheckAfterMove(move, color)) {
                     moves.push(move);
                 }
@@ -605,17 +622,15 @@ function isStaleMate(color) {
 }
 
 function isCheckAfterMove(moves, color) {
-    let piecesBeforeMove = [];
     for (let move of moves) {
-        let [from, to, capture, toPiece] = move;
-        piecesBeforeMove.push([getPiece(from), getPiece(capture)]);
+        let [from, to, capture, fromPiece, toPiece, caputrePiece] = move;
         board[row(from)][column(from)] = "";
         board[row(capture)][column(capture)] = "";
         board[row(to)][column(to)] = toPiece;
     }
 
     let kingPosition;
-    if (piecesBeforeMove[0][0][1] === 'k') {
+    if (moves[0][3][1] === 'k') {
         kingPosition = moves[0][1];
     } else {
         kingPosition = color === 'b' ? blackKingPosition : whiteKingPosition;
@@ -624,8 +639,7 @@ function isCheckAfterMove(moves, color) {
     let check = isCheck(kingPosition, color);
 
     for (let i = 0; i < moves.length; i++) {
-        let [from, to, capture, _] = moves[i];
-        let [fromPiece, capturePiece] = piecesBeforeMove[i];
+        let [from, to, capture, fromPiece, toPiece, capturePiece] = moves[i];
         board[row(from)][column(from)] = fromPiece;
         board[row(to)][column(to)] = "";
         board[row(capture)][column(capture)] = capturePiece;
@@ -753,8 +767,8 @@ function initGame(fen) {
 
 initGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");// testing starts here
 function undoMove(moves, state) {
-    let [castleState, piecesBeforeMove, enpassantTargetState] = state;
-    let fromPiece = piecesBeforeMove[0][0];
+    let [castleState, enpassantTargetState] = state;
+    let fromPiece = moves[0][3];
     let color = fromPiece[0];
     if (fromPiece[1] === 'k') {
         if (color === 'w') {
@@ -770,8 +784,7 @@ function undoMove(moves, state) {
         blackCastle = castleState;
     }
     for (let i = 0; i < moves.length; i++) {
-        let [from, to, capture, _] = moves[i];
-        let [fromPiece, capturePiece] = piecesBeforeMove[i];
+        let [from, to, capture, fromPiece, toPiece, capturePiece] = moves[i];
         board[row(from)][column(from)] = fromPiece;
         board[row(to)][column(to)] = "";
         board[row(capture)][column(capture)] = capturePiece;
@@ -779,13 +792,7 @@ function undoMove(moves, state) {
 }
 
 function generateUndoState(moves) {
-    let piecesBeforeMove = [];
-    for (let move of moves) {
-        let from = move[0];
-        let capture = move[2];
-        piecesBeforeMove.push([getPiece(from), getPiece(capture)]);
-    }
-    let fromPieceColor = getPiece(moves[0][0])[0];
+    let fromPieceColor = moves[0][3][0];
     let castleState;
     if (fromPieceColor === 'w') {
         castleState = [...whiteCastle];
@@ -793,7 +800,7 @@ function generateUndoState(moves) {
         castleState = [...blackCastle];
     }
     let enpassantTargetState = enpassantTarget;
-    return [castleState, piecesBeforeMove, enpassantTargetState];
+    return [castleState, enpassantTargetState];
 }
 
 function search(color, depth) {

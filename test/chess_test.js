@@ -1,6 +1,6 @@
 function undoMove(moves, state) {
-    let [castleState, piecesBeforeMove, enpassantTargetState] = state;
-    let fromPiece = piecesBeforeMove[0][0];
+    let [castleState, enpassantTargetState] = state;
+    let fromPiece = moves[0][3];
     let color = fromPiece[0];
     if (fromPiece[1] === 'k') {
         if (color === 'w') {
@@ -16,8 +16,7 @@ function undoMove(moves, state) {
         blackCastle = castleState;
     }
     for (let i = 0; i < moves.length; i++) {
-        let [from, to, capture, _] = moves[i];
-        let [fromPiece, capturePiece] = piecesBeforeMove[i];
+        let [from, to, capture, fromPiece, toPiece, capturePiece] = moves[i];
         board[row(from)][column(from)] = fromPiece;
         board[row(to)][column(to)] = "";
         board[row(capture)][column(capture)] = capturePiece;
@@ -25,13 +24,7 @@ function undoMove(moves, state) {
 }
 
 function generateUndoState(moves) {
-    let piecesBeforeMove = [];
-    for (let move of moves) {
-        let from = move[0];
-        let capture = move[2];
-        piecesBeforeMove.push([getPiece(from), getPiece(capture)]);
-    }
-    let fromPieceColor = getPiece(moves[0][0])[0];
+    let fromPieceColor = moves[0][3][0];
     let castleState;
     if (fromPieceColor === 'w') {
         castleState = [...whiteCastle];
@@ -39,7 +32,7 @@ function generateUndoState(moves) {
         castleState = [...blackCastle];
     }
     let enpassantTargetState = enpassantTarget;
-    return [castleState, piecesBeforeMove, enpassantTargetState];
+    return [castleState, enpassantTargetState];
 }
 
 function search(color, depth) {

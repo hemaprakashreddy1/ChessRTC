@@ -82,7 +82,7 @@ function handleLocalMove(from, to, promotionPiece) {
     if (res >= 1) {
         myTurn = !myTurn;
         for (let move of moves) {
-            let [fromPosition, toPosition, capturePosition, toPiece] = move;
+            let [fromPosition, toPosition, capturePosition, fromPiece, toPiece, capturePiece] = move;
             let moveElems = [getSquareByPosition(fromPosition), getSquareByPosition(toPosition), getSquareByPosition(capturePosition), generatePiece(toPiece)];
             applyMove(moveElems);
         }
